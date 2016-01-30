@@ -25,6 +25,12 @@
 
 pid_t pid;
 
+#define TOP_VIEW 1
+#define TOWER_VIEW 2
+#define ADV_VIEW 3
+#define FOLLOW_VIEW 4
+
+
 using namespace std;
 void reshapeWindow (GLFWwindow* window, int width, int height);
 
@@ -348,10 +354,31 @@ GLuint createTexture (const char* filename)
  * Customizable functions *
  **************************/
 
-float screenleft = -600.0f, screenright = 600.0f, screentop = -300.0f, screenbotton = 300.0f, screennear = -500.0f, screenfar = 500.0f;
+float screenleft = -600.0f, screenright = 600.0f, screentop = -300.0f, screenbotton = 300.0f, screennear = -500.0f, screenfar = 600.0f;
 double curx, cury;
+int movefront = 0, moveback = 0, moveleft = 0, moveright = 0;
+char gamemat[11][11];
+int camera_view =  TOWER_VIEW;
+int turn_right = 0, turn_left = 0, jump = 0;
+    float speedy = 0;
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
+
+int falling = 0;
+float edge = 20, nvert = 10, nhor = 10;
+float playerposx = edge*(-nhor/2) + edge/2;
+float playerposy = 10;
+float playerposz = edge*(-nvert/2) + (nvert - 1)*edge + edge/2;
+float playerAngle = 0;
+
+vector<pair<int,int> > holes;
+
+int playerOnGround(){
+	if(playerposy == 10)
+		return 1;
+	else
+		return 0;
+}
 void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	// Function is called first on GLFW_PRESS.
@@ -361,21 +388,43 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 			case GLFW_KEY_C:
 				//rectangle_rot_status = !rectangle_rot_status;
 				break;
+			case GLFW_KEY_W:
+				camera_view = TOP_VIEW;
+				break;
+			case GLFW_KEY_A:
+				camera_view = ADV_VIEW;
+				break;
+			case GLFW_KEY_S:
+				camera_view = FOLLOW_VIEW;
+				break;
+			case GLFW_KEY_D:
+				camera_view = TOWER_VIEW;
+				break;
+			case GLFW_KEY_4:
+				turn_left = 0;
+				break;
+			case GLFW_KEY_6:
+				turn_right = 0;
+				break;
 			case GLFW_KEY_KP_ADD:
 				//triangle_rot_status = !triangle_rot_status;
 				break;
 			case GLFW_KEY_KP_SUBTRACT:
 				break;
 			case GLFW_KEY_LEFT:
+				moveleft = 0;
 				//				panleft = 0;
 				break;
 			case GLFW_KEY_RIGHT:
+				moveright = 0;
 				//				panright = 0;
 				break;
 			case GLFW_KEY_UP:
+				movefront = 0;
 				//				panup = 0;
 				break;
 			case GLFW_KEY_DOWN:
+				moveback = 0;
 				//				pandown = 0;
 				break;
 			case GLFW_KEY_X:
@@ -397,17 +446,30 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 				//				zoomoutstate = 1;
 				break;
 			case GLFW_KEY_LEFT:
+				moveleft = 1;
 				//				panleft = 1;
 				break;
 			case GLFW_KEY_RIGHT:
+				moveright = 1;
 				//				panright = 1;
 				break;
 			case GLFW_KEY_UP:
+				movefront = 1;
 				//				panup = 1;
 				break;
 			case GLFW_KEY_DOWN:
+				moveback = 1;
 				//				pandown = 1;
 				break;
+			case GLFW_KEY_4:
+				turn_left = 1;
+				break;
+			case GLFW_KEY_6:
+				turn_right = 1;
+				break;
+			case GLFW_KEY_SPACE:
+				if(playerOnGround())
+					jump = 1;
 			default:
 				break;
 		}
@@ -508,7 +570,7 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	   is different from WindowSize */
 	glfwGetFramebufferSize(window, &fbwidth, &fbheight);
 
-	GLfloat fov = 1.0f;
+	GLfloat fov = 70.0f;
 
 	// sets the viewport of openGL renderer
 	glViewport (0, 0, (GLsizei) fbwidth, (GLsizei) fbheight);
@@ -532,105 +594,104 @@ float camera_rotation_angle = 90;
 VAO *temp, *background;
 void createtemp(){
 	static const GLfloat vertex_buffer_data [] = {
-		-100, -100, -100,
-		100, -100, -100,
-		-100, 100, -100,
+		-10, 10, 10,
+		-10, -10, 10,
+		10, 10, 10,
 
-		100, -100, -100,
-		-100, 100, -100,
-		100, 100, -100,
+		-10, -10, 10,
+		10, 10, 10,
+		10, -10, 10,
 
-		100, -100, -100,
-		100, 100, -100,
-		100, 100, 100,
+		-10, 10, -10,
+		-10, -10, -10,
+		10, 10, -10,
 
-		100, -100, -100,
-		100, 100, 100,
-		100, -100, 100,
+		-10, -10, -10,
+		10, 10, -10,
+		10, -10, -10,
 
-		100, 100, 100,
-		100, -100, 100,
-		-100, -100, 100,
+		10, 10, 10,
+		10, -10, 10,
+		10, -10, -10,
 
-		100, 100, 100,
-		-100, -100, 100,
-		-100, 100, 100,
+		10, 10, 10,
+		10, -10, -10,
+		10, 10, -10,
 
-		-100, -100, 100,
-		-100, 100, 100,
-		-100, 100, -100,
+		-10, 10, 10,
+		-10, -10, 10,
+		-10, -10, -10,
 
-		-100, -100, 100,
-		-100, 100, -100,
-		-100, -100, -100,
+		-10, 10, 10,
+		-10, -10, -10,
+		-10, 10, -10,
 
-		-100, -100, -100,
-		100, -100, -100,
-		100, -100, 100,
+		-10, 10, 10,
+		10, 10, 10,
+		10, 10, -10,
 
-		-100, -100, -100,
-		100, -100, 100,
-		-100, -100, 100,
-		
-		-100, 100, -100,
-		100, 100, -100,
-		100, 100, 100,
+		-10, 10, 10,
+		10, 10, -10,
+		-10, 10, -10,
 
-		-100, 100, -100,
-		100, 100, 100,
-		-100, 100, 100
+		-10, -10, 10,
+		10, -10, 10,
+		10, -10, -10,
 
+		-10, -10, 10,
+		10, -10, -10,
+		-10, -10, -10,
 	};
 	static const GLfloat color_buffer_data [] ={
-		1,0,0,
-		1,0,0,
-		1,0,0,
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f, //Front face
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
 
-		1,0,0,
-		1,0,0,
-		1,0,0,
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
 
-		0,1,0,
-		0,1,0,
-		0,1,0,
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f, //Back face
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
 
-		0,1,0,
-		0,1,0,
-		0,1,0,
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
+		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
 
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		
-		0,0,1,
-		0,0,1,
-		0,0,1,
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f, //Top face
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
 
-		1,1,1,
-		1,1,1,
-		1,1,1,
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
 
-		1,1,1,
-		1,1,1,
-		1,1,1,
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f, //Bottom face
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
 
-		1,1,0,
-		1,1,0,
-		1,1,0,
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
+		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
 
-		1,1,0,
-		1,1,0,
-		1,1,0,
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f, //Top face
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
 
-		0,1,1,
-		0,1,1,
-		0,1,1,
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
 
-		0,1,1,
-		0,1,1,
-		0,1,1
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f, //Bottom face
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
+
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
+		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
 	};
-	temp = create3DObject(GL_TRIANGLES, 36 , vertex_buffer_data, color_buffer_data, GL_FILL);
+	temp = create3DObject(GL_TRIANGLES, 30, vertex_buffer_data, color_buffer_data, GL_FILL);
 }
 
 void createBackground(GLuint textureID){
@@ -659,7 +720,9 @@ void createBackground(GLuint textureID){
 
 float dist = 200;
 float angle = 0;
-float zdist = 120;
+float zdist = 200;
+
+
 void draw ()
 {
 	// clear the color and depth in the frame buffer
@@ -680,11 +743,44 @@ void draw ()
 	// Compute Camera matrix (view)
 	//Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
 	//  Don't change unless you are sure!!
-	Matrices.view = glm::lookAt(glm::vec3(0,dist * cos(angle * M_PI/180.0f),dist * sin(angle * M_PI/180.0f)), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
-	//Matrices.view = glm::lookAt(glm::vec3(200,-200,-300), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
+	//Matrices.view = glm::lookAt(glm::vec3(dist * sin(angle * M_PI/180.0f),70,dist * cos(angle * M_PI/180.0f)), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
+	
+	switch(camera_view){
+		case ADV_VIEW:
+			Matrices.view = glm::lookAt(
+					glm::vec3(
+						playerposx + (edge/2) * sin(playerAngle * M_PI/180.0f),
+						playerposy,
+						playerposz - (edge/2) * cos(playerAngle * M_PI/180.0f) 
+						), 
+					glm::vec3(playerposx + 100 * sin(playerAngle*M_PI/180.0f), 0 ,playerposz - 100 * cos(playerAngle*M_PI/180.0f)), 
+					glm::vec3(0,1,0)
+					);
+			break;
+		case FOLLOW_VIEW:
+			Matrices.view = glm::lookAt(
+					glm::vec3(
+						playerposx - edge * sin(playerAngle * M_PI/180.0f),
+						playerposy + edge,
+						playerposz + edge * cos(playerAngle * M_PI/180.0f)
+						), 
+					glm::vec3(playerposx + 100 * sin(playerAngle*M_PI/180.0f), 0 ,playerposz - 100 * cos(playerAngle*M_PI/180.0f)), 
+					glm::vec3(0,1,0)
+					);
+			break;
+		case TOP_VIEW:
+			Matrices.view = glm::lookAt(glm::vec3(0 ,250,1), glm::vec3(0, 0 ,0), glm::vec3(0,1,0));
+			break;
+		case TOWER_VIEW:
+			Matrices.view = glm::lookAt(glm::vec3(0 ,200,200), glm::vec3(0, 0 ,0), glm::vec3(0,1,0));
+			break;
+	}
+
+
 	camera_rotation_angle += 1;
-	angle += 1;
-	zdist += 1;
+	//angle += 1;
+	zdist -= 1;
+	zdist = max(0.0f,zdist);
 	zdist = min(zdist,500.0f);
 	// Compute ViewProject matrix as view/camera might not be changed for this frame (basic scenario)
 	//  Don't change unless you are sure!!
@@ -726,10 +822,40 @@ void draw ()
 	// Pop matrix to undo transformations till last push matrix instead of recomputing model matrix
 	// glPopMatrix ();
 
-	Matrices.model = glm::mat4(1.0f);
+	//Matrices.model = glm::mat4(1.0f);
+	//glm::mat4 rotateCube = glm::rotate ((float)(angle*M_PI/180.0f), glm::vec3(1,0,0));
 	//	glm::mat4 scalePower = glm::scale(glm::vec3(power*6,1,1));
 	//	glm::mat4 translatePower = glm::translate(glm::vec3(-400 - ( 90 - power * 3), -240, 0));
 	//	Matrices.model *= ( translatePower * scalePower);
+	//Matrices.model *= rotateCube;
+	//MVP = VP * Matrices.model;
+	//glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	//draw3DObject(temp);
+
+	for(int i=0;i<nhor;i++){
+		for(int j=0;j<nvert;j++){
+			float xpos,ypos,zpos;
+			if(gamemat[i][j] == '.'){
+				xpos = edge*(-nhor/2) + j*edge + edge/2;
+				ypos = 0;
+				zpos = edge*(-nvert/2) + i*edge + edge/2;
+				Matrices.model = glm::mat4(1.0f);
+				glm::mat4 tr1 = glm::translate(glm::vec3(0,-10,0));
+				glm::mat4 translateBox = glm::translate(glm::vec3(xpos,ypos,zpos));
+				glm::mat4 scl = glm::scale(glm::vec3(1,10,1));
+				Matrices.model *= ( translateBox * scl * tr1);
+				MVP = VP * Matrices.model;
+				glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+				draw3DObject(temp);
+			}
+		}
+	}
+
+	Matrices.model = glm::mat4(1.0f);
+	glm::mat4 translatePlayer = glm::translate(glm::vec3(playerposx, playerposy, playerposz));
+	glm::mat4 scalePlayer = glm::scale(glm::vec3(0.5,1,0.5));
+	glm::mat4 roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer * scalePlayer * roatetePlayer);
 	MVP = VP * Matrices.model;
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	draw3DObject(temp);
@@ -738,7 +864,6 @@ void draw ()
 	static int fontScale = 1;
 	float fontScaleValue = 50 + 0.25*sinf(fontScale*M_PI/180.0f);
 	glm::vec3 fontColor = glm::vec3(228.0f/255.0f,142.0f/255.0f,57.0f/255.0f);//getRGBfromHue (fontScale);
-
 
 
 	// Use font Shaders for next part of code
@@ -888,6 +1013,57 @@ void initGL (GLFWwindow* window, int width, int height)
 	cout << "GLSL: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 }
 
+void checkFall(){
+	if(playerposx < edge *(-nhor/2) - edge/4 || playerposx > edge*(-nhor/2) +(nhor)*edge + edge/4 ||
+			playerposz > edge*(-nvert/2) + nvert * edge + edge/4 || playerposz < edge *(-nvert/2) - edge/4){
+		falling = 1;
+	}
+	for(int p=0;p<holes.size();p++){
+		int i = holes[p].first;
+		int j = holes[p].second;
+		if(playerposz > edge*(-nhor/2)+i*edge + edge/4 && playerposz < edge*(-nhor/2) + (i+1)*edge - edge/4 &&
+				playerposx > edge*(-nvert/2) + j*edge + edge/4 && playerposx < edge*(-nvert/2) + (j+1)*edge -edge/4)
+			falling =1;
+	}
+
+}
+
+void turnPlayer(){
+	if(turn_right)
+		playerAngle += 1;
+	if(turn_left)
+		playerAngle -= 1;
+}
+
+void jumpPlayer(){
+	if(jump == 1){
+		speedy = 5;
+		jump = 0;
+	}
+	playerposy += speedy;
+	speedy -= 0.5;
+	if(!falling && playerposy <= 10.0f ){
+		playerposy = 10.0f;
+		speedy = 0;
+	}
+}
+
+void movePlayer(){
+	turnPlayer();
+	jumpPlayer();
+	if(movefront == 1 && !falling)
+		playerposz-=cos(playerAngle*M_PI/180.0f), playerposx+=sin(playerAngle*M_PI/180.0f);
+	if(moveleft == 1 && !falling)
+		playerposx-=cos(playerAngle*M_PI/180.0f), playerposz-=sin(playerAngle*M_PI/180.0f);
+	if(moveright == 1 && !falling)
+		playerposx+=cos(playerAngle*M_PI/180.0f), playerposz+=sin(playerAngle*M_PI/180.0f);
+	if(moveback == 1 && !falling)
+		playerposz+=cos(playerAngle*M_PI/180.0f), playerposx-=sin(playerAngle*M_PI/180.0f);
+
+	checkFall();
+	if(falling)
+		playerposy--;
+}
 int main (int argc, char** argv)
 {
 	int width = 1200;
@@ -939,7 +1115,7 @@ int main (int argc, char** argv)
 		/* decode and play */
 		char *p =(char *)buffer;
 		while (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK)
-			ao_play(dev, p, done);
+			;//ao_play(dev, p, done);
 
 		/* clean up */
 		free(buffer);
@@ -953,19 +1129,38 @@ int main (int argc, char** argv)
 
 	int level = 1;
 	string line;
-	ifstream levelfile("1.txt");
+	char filename[100];
+	sprintf(filename,"%d.txt",level);
+	ifstream levelfile(filename);
 	if(levelfile.is_open()){
+		int i=0;
 		while(getline(levelfile, line)){
 			cout<<line<<endl;
+			for(int j=0;line[j]!='\0';j++)
+				gamemat[i][j]=line[j];
+			i++;
 		}
 		levelfile.close();
 	}
 	else
 		cout<<"Unable to open file";
+	
+	for(int i= 0;i<nhor;i++)
+		for(int j=0;j<nvert;j++)
+			if(gamemat[i][j]=='X')
+				holes.push_back(make_pair(i,j));
+
 	/* Draw in loop */
 	while (!glfwWindowShouldClose(window)) {
 
-		/*		if(panleft == 1 && screenleft >= -600 + 5){
+
+		movePlayer();
+		/*float playerposx = edge*(-nhor/2) - edge/2;
+		  float playerposy = 10;
+		  float playerposz = edge*(-nvert/2) + (nvert - 1)*edge - edge/2;
+		  */		
+
+		  /*		if(panleft == 1 && screenleft >= -600 + 5){
 				screenleft -= 5;
 				screenright -= 5;
 				}
@@ -1001,20 +1196,20 @@ int main (int argc, char** argv)
 				if(zoominstate == 1 || zoomoutstate == 1 || panleft == 1 || panright == 1 || panup == 1 || pandown == 1)
 				reshapeWindow(window, width, height);
 				*/		// OpenGL Dramands
-		draw();
+		  draw();
 
-		// Swap Frame Buffer in double buffering
-		glfwSwapBuffers(window);
+		  // Swap Frame Buffer in double buffering
+		  glfwSwapBuffers(window);
 
-		// Poll for Keyboard and mouse events
-		glfwPollEvents();
+		  // Poll for Keyboard and mouse events
+		  glfwPollEvents();
 
-		// Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
-		current_time = glfwGetTime(); // Time in seconds
-		if ((current_time - last_update_time) >= 0.5) { // atleast 0.5s elapsed since last frame
-			// do something every 0.5 seconds ..
-			last_update_time = current_time;
-		}
+		  // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
+		  current_time = glfwGetTime(); // Time in seconds
+		  if ((current_time - last_update_time) >= 0.5) { // atleast 0.5s elapsed since last frame
+			  // do something every 0.5 seconds ..
+			  last_update_time = current_time;
+		  }
 	}
 
 	glfwTerminate();
