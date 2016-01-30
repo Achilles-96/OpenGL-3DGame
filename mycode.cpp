@@ -371,7 +371,7 @@ float playerposy = 10;
 float playerposz = edge*(-nvert/2) + (nvert - 1)*edge + edge/2;
 float playerAngle = 0;
 
-vector<pair<int,int> > holes;
+vector<pair<int,int> > holes, blocks;
 
 int playerOnGround(){
 	if(playerposy == 10)
@@ -379,6 +379,7 @@ int playerOnGround(){
 	else
 		return 0;
 }
+
 void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	// Function is called first on GLFW_PRESS.
@@ -835,7 +836,7 @@ void draw ()
 	for(int i=0;i<nhor;i++){
 		for(int j=0;j<nvert;j++){
 			float xpos,ypos,zpos;
-			if(gamemat[i][j] == '.'){
+			if(gamemat[i][j] != 'X'){
 				xpos = edge*(-nhor/2) + j*edge + edge/2;
 				ypos = 0;
 				zpos = edge*(-nvert/2) + i*edge + edge/2;
@@ -849,6 +850,20 @@ void draw ()
 				draw3DObject(temp);
 			}
 		}
+	}
+
+	for(int p=0;p<blocks.size();p++){
+		int i = blocks[p].first, j = blocks[p].second;
+		//cout<<i<<endl;
+		float xpos = edge*(-nhor/2) + j*edge + edge/2;
+		float ypos = 10;
+		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+		Matrices.model = glm::mat4(1.0f);
+		glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
+		Matrices.model *= translateBlock;
+		MVP = VP * Matrices.model;
+		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		draw3DObject(temp);
 	}
 
 	Matrices.model = glm::mat4(1.0f);
@@ -1046,24 +1061,71 @@ void jumpPlayer(){
 		playerposy = 10.0f;
 		speedy = 0;
 	}
+	if(playerposy <= 10.0f)
+		speedy = 0;
 }
+int collideBlocks(int direction){
+	for(int p = 0;p<blocks.size();p++){
+		int i = blocks[p].first;
+		int j = blocks[p].second;
+		float xpos = edge*(-nhor/2) + j*edge + edge/2;
+		float ypos = 10;
+		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+		switch(direction){
+			case 1:
+				//cout<<playerposz<<" "<<zpos<<endl;
+				if(playerposz - cos(playerAngle*M_PI/180.0f) - edge/4 < zpos + edge/2 &&
+						playerposz - cos(playerAngle*M_PI/180.0f) + edge/4 > zpos - edge/2 &&
+						playerposx + edge/4 > xpos - edge/2 &&
+						playerposx - edge/4 < xpos + edge/2)
+					return 1;
+				break;
+			case 2:
+				if(playerposz + cos(playerAngle*M_PI/180.0f) + edge/4 > zpos - edge/2 &&
+						playerposz + cos(playerAngle*M_PI/180.0f) - edge/4 < zpos + edge/2 &&
+						playerposx + edge/4 > xpos - edge/2 &&
+						playerposx - edge/4 < xpos + edge/2)
+					return 1;
+				break;
+			case 3:
+				if(playerposx + cos(playerAngle*M_PI/180.0f) + edge/4 > xpos - edge/2 &&
+						playerposx + cos(playerAngle*M_PI/180.0f) - edge/4 < xpos + edge/2 &&
+						playerposz - edge/4 < zpos + edge/2 &&
+						playerposz + edge/4 > zpos - edge/2)
+					return 1;
+				break;
+			case 4:
+				if(playerposx - cos(playerAngle*M_PI/180.0f) - edge/4 < xpos + edge/2 &&
+						playerposx - cos(playerAngle*M_PI/180.0f) + edge/4 > xpos - edge/2 &&
+						playerposz - edge/4 < zpos + edge/2 &&
+						playerposz + edge/4 > zpos - edge/2)
+					return 1;
+				break;
+
+		}
+	}
+	return 0;
+}
+
 
 void movePlayer(){
 	turnPlayer();
 	jumpPlayer();
-	if(movefront == 1 && !falling)
+	int front = 1, back = 2, right = 3, left =4;
+	if(movefront == 1 && !falling && !collideBlocks(1))
 		playerposz-=cos(playerAngle*M_PI/180.0f), playerposx+=sin(playerAngle*M_PI/180.0f);
-	if(moveleft == 1 && !falling)
+	if(moveleft == 1 && !falling && !collideBlocks(4))
 		playerposx-=cos(playerAngle*M_PI/180.0f), playerposz-=sin(playerAngle*M_PI/180.0f);
-	if(moveright == 1 && !falling)
+	if(moveright == 1 && !falling && !collideBlocks(3))
 		playerposx+=cos(playerAngle*M_PI/180.0f), playerposz+=sin(playerAngle*M_PI/180.0f);
-	if(moveback == 1 && !falling)
+	if(moveback == 1 && !falling && !collideBlocks(2))
 		playerposz+=cos(playerAngle*M_PI/180.0f), playerposx-=sin(playerAngle*M_PI/180.0f);
 
 	checkFall();
 	if(falling)
 		playerposy--;
 }
+
 int main (int argc, char** argv)
 {
 	int width = 1200;
@@ -1101,7 +1163,7 @@ int main (int argc, char** argv)
 		buffer = (unsigned char*) malloc(buffer_size * sizeof(unsigned char));
 
 		/* open the file and get the decoding format */
-		mpg123_open(mh, "trial.mp3");
+		mpg123_open(mh, "game.mp3");
 		mpg123_getformat(mh, &rate, &channels, &encoding);
 
 		/* set the output format and open the output device */
@@ -1147,69 +1209,35 @@ int main (int argc, char** argv)
 	
 	for(int i= 0;i<nhor;i++)
 		for(int j=0;j<nvert;j++)
-			if(gamemat[i][j]=='X')
-				holes.push_back(make_pair(i,j));
+			switch(gamemat[i][j]){
+				case 'X':
+					holes.push_back(make_pair(i,j));
+					break;
+				case 'B':
+					blocks.push_back(make_pair(i,j));
+					break;
+			}
+
 
 	/* Draw in loop */
 	while (!glfwWindowShouldClose(window)) {
 
 
 		movePlayer();
-		/*float playerposx = edge*(-nhor/2) - edge/2;
-		  float playerposy = 10;
-		  float playerposz = edge*(-nvert/2) + (nvert - 1)*edge - edge/2;
-		  */		
+		draw();
 
-		  /*		if(panleft == 1 && screenleft >= -600 + 5){
-				screenleft -= 5;
-				screenright -= 5;
-				}
-				if(panright == 1 && screenright <= 600 - 5){
-				screenleft += 5;
-				screenright += 5;
-				}
-				if(panup == 1 && screentop >= -300 + 5){
-				screentop -= 5;
-				screenbotton -= 5;
-				}
-				if(pandown == 1 && screenbotton <= 300 - 5){
-				screentop += 5;
-				screenbotton += 5;
-				}
+		// Swap Frame Buffer in double buffering
+		glfwSwapBuffers(window);
 
-				if(zoominstate == 1 && screenright-screenleft > 800) {
-				screenleft /= 1.02;
-				screenright /= 1.02;
-				screentop /= 1.02;
-				screenbotton /= 1.02;
-				}
-				if(zoomoutstate == 1 && screenright - screenleft < 1200) {
-				if(screenleft >= -600.0f/1.02f)
-				screenleft *= 1.02;
-				if(screenright <= 600.0f/1.02f)
-				screenright *= 1.02;
-				if(screentop >= -300.0f/1.02f)
-				screentop *= 1.02;
-				if(screenbotton <= 300.0f/1.02f)
-				screenbotton *= 1.02;
-				}
-				if(zoominstate == 1 || zoomoutstate == 1 || panleft == 1 || panright == 1 || panup == 1 || pandown == 1)
-				reshapeWindow(window, width, height);
-				*/		// OpenGL Dramands
-		  draw();
+		// Poll for Keyboard and mouse events
+		glfwPollEvents();
 
-		  // Swap Frame Buffer in double buffering
-		  glfwSwapBuffers(window);
-
-		  // Poll for Keyboard and mouse events
-		  glfwPollEvents();
-
-		  // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
-		  current_time = glfwGetTime(); // Time in seconds
-		  if ((current_time - last_update_time) >= 0.5) { // atleast 0.5s elapsed since last frame
-			  // do something every 0.5 seconds ..
-			  last_update_time = current_time;
-		  }
+		// Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
+		current_time = glfwGetTime(); // Time in seconds
+		if ((current_time - last_update_time) >= 0.5) { // atleast 0.5s elapsed since last frame
+			// do something every 0.5 seconds ..
+			last_update_time = current_time;
+		}
 	}
 
 	glfwTerminate();
