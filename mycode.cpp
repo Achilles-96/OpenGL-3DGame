@@ -358,7 +358,7 @@ float screenleft = -600.0f, screenright = 600.0f, screentop = -300.0f, screenbot
 double curx, cury;
 int movefront = 0, moveback = 0, moveleft = 0, moveright = 0;
 char gamemat[11][11];
-int camera_view =  FOLLOW_VIEW;
+int camera_view =  ADV_VIEW;
 int turn_right = 0, turn_left = 0, jump = 0;
     float speedy = 0;
 /* Executed when a regular key is pressed/released/held-down */
@@ -607,8 +607,8 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 
 
 float camera_rotation_angle = 90;
-VAO *temp, *background;
-void createtemp(){
+VAO *block, *background, *player;
+void createBlock(){
 	static const GLfloat vertex_buffer_data [] = {
 		-10, 10, 10,
 		-10, -10, 10,
@@ -707,7 +707,57 @@ void createtemp(){
 		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
 		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
 	};
-	temp = create3DObject(GL_TRIANGLES, 30, vertex_buffer_data, color_buffer_data, GL_FILL);
+	block = create3DObject(GL_TRIANGLES, 30, vertex_buffer_data, color_buffer_data, GL_FILL);
+	static const GLfloat color_buffer_data2 [] ={
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
+
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
+
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
+	};
+	player = create3DObject(GL_TRIANGLES, 30, vertex_buffer_data, color_buffer_data2, GL_FILL);
 }
 
 void createBackground(GLuint textureID){
@@ -862,7 +912,7 @@ void draw ()
 				Matrices.model *= ( translateBox * scl * tr1);
 				MVP = VP * Matrices.model;
 				glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-				draw3DObject(temp);
+				draw3DObject(block);
 			}
 		}
 	}
@@ -879,7 +929,7 @@ void draw ()
 		Matrices.model *= (translateBlock * rotateBlock);
 		MVP = VP * Matrices.model;
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-		draw3DObject(temp);
+		draw3DObject(block);
 	}
 
 	Matrices.model = glm::mat4(1.0f);
@@ -889,7 +939,7 @@ void draw ()
 	Matrices.model *= (translatePlayer * scalePlayer * roatetePlayer);
 	MVP = VP * Matrices.model;
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	draw3DObject(temp);
+	draw3DObject(player);
 
 	// Render font on screen
 	static int fontScale = 1;
@@ -993,7 +1043,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	// Create the models
 	// Generate the VAO, VBOs, vertices data & copy into the array buffer
 	createBackground (textureID);
-	createtemp();
+	createBlock();
 	//createCatapult2();
 
 	// Create and compile our GLSL program from the shaders
@@ -1057,7 +1107,7 @@ int checkPlayerOnBlock(){
 				playerposz - edge/4 < zpos + edge/2 &&
 				playerposy - edge/2 <= ypos + edge/2
 				){
-			return 1;
+			return p+1;
 		}
 	}
 	return 0;
@@ -1161,8 +1211,10 @@ int collideBlocks(int direction){
 void movePlayer(){
 	turnPlayer();
 	jumpPlayer();
-	if(checkPlayerOnBlock())
+	int playerOnBlock = checkPlayerOnBlock();
+	if(playerOnBlock){
 		playerAngle--;
+	}
 	int front = 1, back = 2, right = 3, left =4;
 	if(movefront == 1 && !falling && !collideBlocks(1))
 		playerposz-=cos(playerAngle*M_PI/180.0f), playerposx+=sin(playerAngle*M_PI/180.0f);
