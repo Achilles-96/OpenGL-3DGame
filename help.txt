@@ -1,0 +1,12 @@
+Controls:
+Move right: right arrow
+Move left: left arrow
+Move front: up arrow
+Move back: back arrow
+SPACE: jump
+Turn right: 6
+Turn left: 4
+Camera top view: w
+Camera tower view: d
+Camera adventurer view: a
+Camera follower view: s

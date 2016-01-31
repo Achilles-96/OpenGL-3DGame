@@ -761,14 +761,15 @@ void createBlock(){
 }
 
 void createBackground(GLuint textureID){
+	int skyposy = 50, skyposx = 50, skyposz = 50;
 	static const GLfloat vertex_buffer_data[] = {
-		-600, -300, 0,
-		-600, 300, 0,
-		600, -300, 0,
+		-skyposx, skyposy, -skyposz,
+		-skyposx, skyposy, skyposz,
+		skyposx, skyposy, -skyposz,
 
-		-600, 300, 0,
-		600, -300, 0,
-		600, 300, 0
+		-skyposx, skyposy, skyposz,
+		skyposx, skyposy, -skyposz,
+		skyposx, skyposy, skyposz
 	};
 
 	static const GLfloat texture_buffer_data[] = {
@@ -865,7 +866,7 @@ void draw ()
 	MVP = VP * Matrices.model;
 	glUniformMatrix4fv(Matrices.TexMatrixID, 1, GL_FALSE, &MVP[0][0]);
 	glUniform1i(glGetUniformLocation(textureProgramID, "texSampler"), 0);
-	//draw3DTexturedObject(background);
+	if(camera_view != TOP_VIEW && camera_view != TOWER_VIEW);// draw3DTexturedObject(background);
 
 
 	glUseProgram (programID);
@@ -1027,7 +1028,7 @@ void initGL (GLFWwindow* window, int width, int height)
 
 	// load an image file directly as a new OpenGL texture
 	// GLuint texID = SOIL_load_OGL_texture ("beach.png", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS); // Buggy for OpenGL3
-	GLuint textureID = createTexture("background.png");
+	GLuint textureID = createTexture("background.jpg");
 
 	// check for an error during the load process
 	if(textureID == 0 )

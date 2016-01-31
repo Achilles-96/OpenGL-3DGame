@@ -1,0 +1,2 @@
+Libraries required: GL(OpenGL), glfw(windows), ftgl(Fonts), SOIL(Textures), ao(audio), mpg123(audio)
+Run Makefile to create executable
