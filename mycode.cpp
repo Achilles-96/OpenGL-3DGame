@@ -376,8 +376,23 @@ vector<pair<int,int> > holes, blocks;
 int playerOnGround(){
 	if(playerposy == 10)
 		return 1;
-	else
-		return 0;
+	for(int p = 0;p<blocks.size();p++){
+		int i = blocks[p].first, j = blocks[p].second;
+		float xpos = edge*(-nhor/2) + j*edge + edge/2;
+		float ypos = 10;
+		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+
+		if(playerposx + edge/4 > xpos - edge/2 &&
+				playerposx - edge/4 < xpos + edge/2 &&
+				playerposz + edge/4 > zpos - edge/2 &&
+				playerposz - edge/4 < zpos + edge/2 &&
+				playerposy - edge/2 <= ypos + edge/2
+				){
+			playerposy = ypos + edge;
+			return 1;
+		}
+	}
+	return 0;
 }
 
 void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -1036,10 +1051,28 @@ void checkFall(){
 	for(int p=0;p<holes.size();p++){
 		int i = holes[p].first;
 		int j = holes[p].second;
-		if(playerposz > edge*(-nhor/2)+i*edge + edge/4 && playerposz < edge*(-nhor/2) + (i+1)*edge - edge/4 &&
-				playerposx > edge*(-nvert/2) + j*edge + edge/4 && playerposx < edge*(-nvert/2) + (j+1)*edge -edge/4)
+		if(playerposz >= edge*(-nhor/2)+i*edge + edge/4 && playerposz <= edge*(-nhor/2) + (i+1)*edge - edge/4 &&
+				playerposx >= edge*(-nvert/2) + j*edge + edge/4 && playerposx <= edge*(-nvert/2) + (j+1)*edge -edge/4)
 			falling =1;
 	}
+	for(int p = 0;p<blocks.size();p++){
+		int i = blocks[p].first, j = blocks[p].second;
+		float xpos = edge*(-nhor/2) + j*edge + edge/2;
+		float ypos = 10;
+		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+
+		if(playerposx + edge/4 > xpos - edge/2 &&
+				playerposx - edge/4 < xpos + edge/2 &&
+				playerposz + edge/4 > zpos - edge/2 &&
+				playerposz - edge/4 < zpos + edge/2 &&
+				playerposy - edge/2 <= ypos + edge/2
+				){
+			falling = 0, speedy = 0;
+			playerposy = ypos + edge;
+		}
+	}
+	if(playerposy <= 10.0f)
+		speedy = 0;
 
 }
 
@@ -1061,9 +1094,8 @@ void jumpPlayer(){
 		playerposy = 10.0f;
 		speedy = 0;
 	}
-	if(playerposy <= 10.0f)
-		speedy = 0;
 }
+
 int collideBlocks(int direction){
 	for(int p = 0;p<blocks.size();p++){
 		int i = blocks[p].first;
@@ -1077,28 +1109,36 @@ int collideBlocks(int direction){
 				if(playerposz - cos(playerAngle*M_PI/180.0f) - edge/4 < zpos + edge/2 &&
 						playerposz - cos(playerAngle*M_PI/180.0f) + edge/4 > zpos - edge/2 &&
 						playerposx + edge/4 > xpos - edge/2 &&
-						playerposx - edge/4 < xpos + edge/2)
+						playerposx - edge/4 < xpos + edge/2 &&
+						playerposy - edge/4 < ypos + edge/2
+				  )
 					return 1;
 				break;
 			case 2:
 				if(playerposz + cos(playerAngle*M_PI/180.0f) + edge/4 > zpos - edge/2 &&
 						playerposz + cos(playerAngle*M_PI/180.0f) - edge/4 < zpos + edge/2 &&
 						playerposx + edge/4 > xpos - edge/2 &&
-						playerposx - edge/4 < xpos + edge/2)
+						playerposx - edge/4 < xpos + edge/2 &&
+						playerposy - edge/4 < ypos + edge/2
+				  )
 					return 1;
 				break;
 			case 3:
 				if(playerposx + cos(playerAngle*M_PI/180.0f) + edge/4 > xpos - edge/2 &&
 						playerposx + cos(playerAngle*M_PI/180.0f) - edge/4 < xpos + edge/2 &&
 						playerposz - edge/4 < zpos + edge/2 &&
-						playerposz + edge/4 > zpos - edge/2)
+						playerposz + edge/4 > zpos - edge/2 &&
+						playerposy - edge/4 < ypos + edge/2
+				  )
 					return 1;
 				break;
 			case 4:
 				if(playerposx - cos(playerAngle*M_PI/180.0f) - edge/4 < xpos + edge/2 &&
 						playerposx - cos(playerAngle*M_PI/180.0f) + edge/4 > xpos - edge/2 &&
 						playerposz - edge/4 < zpos + edge/2 &&
-						playerposz + edge/4 > zpos - edge/2)
+						playerposz + edge/4 > zpos - edge/2 &&
+						playerposy - edge/4 < ypos + edge/2
+				  )
 					return 1;
 				break;
 
