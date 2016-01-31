@@ -358,7 +358,7 @@ float screenleft = -600.0f, screenright = 600.0f, screentop = -300.0f, screenbot
 double curx, cury;
 int movefront = 0, moveback = 0, moveleft = 0, moveright = 0;
 char gamemat[11][11];
-int camera_view =  TOWER_VIEW;
+int camera_view =  FOLLOW_VIEW;
 int turn_right = 0, turn_left = 0, jump = 0;
     float speedy = 0;
 /* Executed when a regular key is pressed/released/held-down */
@@ -794,7 +794,7 @@ void draw ()
 
 
 	camera_rotation_angle += 1;
-	//angle += 1;
+	angle += 1;
 	zdist -= 1;
 	zdist = max(0.0f,zdist);
 	zdist = min(zdist,500.0f);
@@ -875,7 +875,8 @@ void draw ()
 		float zpos = edge*(-nvert/2) + i*edge + edge/2;
 		Matrices.model = glm::mat4(1.0f);
 		glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
-		Matrices.model *= translateBlock;
+		glm::mat4 rotateBlock = glm::rotate((float)(angle * M_PI/180.0f),glm::vec3(0,1,0));
+		Matrices.model *= (translateBlock * rotateBlock);
 		MVP = VP * Matrices.model;
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		draw3DObject(temp);
@@ -1043,18 +1044,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	cout << "GLSL: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 }
 
-void checkFall(){
-	if(playerposx < edge *(-nhor/2) - edge/4 || playerposx > edge*(-nhor/2) +(nhor)*edge + edge/4 ||
-			playerposz > edge*(-nvert/2) + nvert * edge + edge/4 || playerposz < edge *(-nvert/2) - edge/4){
-		falling = 1;
-	}
-	for(int p=0;p<holes.size();p++){
-		int i = holes[p].first;
-		int j = holes[p].second;
-		if(playerposz >= edge*(-nhor/2)+i*edge + edge/4 && playerposz <= edge*(-nhor/2) + (i+1)*edge - edge/4 &&
-				playerposx >= edge*(-nvert/2) + j*edge + edge/4 && playerposx <= edge*(-nvert/2) + (j+1)*edge -edge/4)
-			falling =1;
-	}
+int checkPlayerOnBlock(){
 	for(int p = 0;p<blocks.size();p++){
 		int i = blocks[p].first, j = blocks[p].second;
 		float xpos = edge*(-nhor/2) + j*edge + edge/2;
@@ -1067,9 +1057,29 @@ void checkFall(){
 				playerposz - edge/4 < zpos + edge/2 &&
 				playerposy - edge/2 <= ypos + edge/2
 				){
-			falling = 0, speedy = 0;
-			playerposy = ypos + edge;
+			return 1;
 		}
+	}
+	return 0;
+}
+
+void checkFall(){
+	if(playerposx < edge *(-nhor/2) - edge/4 || playerposx > edge*(-nhor/2) +(nhor)*edge + edge/4 ||
+			playerposz > edge*(-nvert/2) + nvert * edge + edge/4 || playerposz < edge *(-nvert/2) - edge/4){
+		falling = 1;
+	}
+	for(int p=0;p<holes.size();p++){
+		int i = holes[p].first;
+		int j = holes[p].second;
+		if(playerposz >= edge*(-nhor/2)+i*edge + edge/4 && playerposz <= edge*(-nhor/2) + (i+1)*edge - edge/4 &&
+				playerposx >= edge*(-nvert/2) + j*edge + edge/4 && playerposx <= edge*(-nvert/2) + (j+1)*edge -edge/4)
+			falling =1;
+	}
+
+	if(checkPlayerOnBlock()){
+		falling = 0;
+		speedy = 0;
+		playerposy = 10 + edge;
 	}
 	if(playerposy <= 10.0f)
 		speedy = 0;
@@ -1151,6 +1161,8 @@ int collideBlocks(int direction){
 void movePlayer(){
 	turnPlayer();
 	jumpPlayer();
+	if(checkPlayerOnBlock())
+		playerAngle--;
 	int front = 1, back = 2, right = 3, left =4;
 	if(movefront == 1 && !falling && !collideBlocks(1))
 		playerposz-=cos(playerAngle*M_PI/180.0f), playerposx+=sin(playerAngle*M_PI/180.0f);
@@ -1217,7 +1229,7 @@ int main (int argc, char** argv)
 		/* decode and play */
 		char *p =(char *)buffer;
 		while (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK)
-			;//ao_play(dev, p, done);
+			ao_play(dev, p, done);
 
 		/* clean up */
 		free(buffer);
