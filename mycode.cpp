@@ -29,7 +29,9 @@ pid_t pid;
 #define TOWER_VIEW 2
 #define ADV_VIEW 3
 #define FOLLOW_VIEW 4
+#define HELI_VIEW 5
 
+#define BLOCK_TOP_LIMIT 120
 
 using namespace std;
 void reshapeWindow (GLFWwindow* window, int width, int height);
@@ -355,10 +357,10 @@ GLuint createTexture (const char* filename)
  **************************/
 
 float screenleft = -600.0f, screenright = 600.0f, screentop = -300.0f, screenbotton = 300.0f, screennear = -500.0f, screenfar = 600.0f;
-double curx, cury;
+double curx, cury, initx, inity;
 int movefront = 0, moveback = 0, moveleft = 0, moveright = 0;
 char gamemat[11][11];
-int camera_view =  ADV_VIEW;
+int camera_view =  TOWER_VIEW;
 int turn_right = 0, turn_left = 0, jump = 0;
 float speedy = 0;
 /* Executed when a regular key is pressed/released/held-down */
@@ -370,8 +372,11 @@ float playerposx = edge*(-nhor/2) + edge/2;
 float playerposy = 10;
 float playerposz = edge*(-nvert/2) + (nvert - 1)*edge + edge/2;
 float playerAngle = 0;
+float heli_angle, init_heli_angle;
+int heli_rotate_state = 0, heli_zoom_in_state = 0, heli_zoom_out_state = 0;
+float heli_dist = 180, heli_disty = 200;
 
-vector<pair<int,int> > holes, blocks, imblocks, treasure;
+vector<pair<int,int> > holes, blocks, imblocks, treasure, impos;
 
 int playerOnGround(){
 	if(playerposy == 10)
@@ -416,6 +421,10 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 			case GLFW_KEY_D:
 				camera_view = TOWER_VIEW;
 				break;
+			case GLFW_KEY_E:
+				camera_view = HELI_VIEW;
+				heli_angle = 0;
+				break;
 			case GLFW_KEY_4:
 				turn_left = 0;
 				break;
@@ -423,9 +432,11 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 				turn_right = 0;
 				break;
 			case GLFW_KEY_KP_ADD:
+				heli_zoom_in_state = 0;
 				//triangle_rot_status = !triangle_rot_status;
 				break;
 			case GLFW_KEY_KP_SUBTRACT:
+				heli_zoom_out_state = 0;
 				break;
 			case GLFW_KEY_LEFT:
 				moveleft = 0;
@@ -456,9 +467,11 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 				quit(window);
 				break;
 			case GLFW_KEY_KP_ADD:
+				heli_zoom_in_state = 1;
 				//				zoominstate=1;
 				break;
 			case GLFW_KEY_KP_SUBTRACT:
+				heli_zoom_out_state = 1;
 				//				zoomoutstate = 1;
 				break;
 			case GLFW_KEY_LEFT:
@@ -507,51 +520,23 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	if(yoffset == 1){
-		/*		screenleft /= 1.02;
-				screenright /= 1.02;
-				screentop /= 1.02;
-				screenbotton /= 1.02;
-				reshapeWindow(window, 1200, 600);
-				*/	}
-	else if(yoffset == -1){
-		/*		if(screenleft >= -600.0f/1.02f)
-				screenleft *= 1.02;
-				if(screenright <= 600.0f/1.02f)
-				screenright *= 1.02;
-				if(screentop >= -300.0f/1.02f)
-				screentop *= 1.02;
-				if(screenbotton <= 300.0f/1.02f)
-				screenbotton *= 1.02;
-				reshapeWindow(window, 1200, 600);
-				*/	}
-
+	if(yoffset == 1)
+		if(heli_dist >= 20)
+			heli_dist--, heli_disty--;
+	else if(yoffset == -1)
+		if(heli_dist <= 170)
+			heli_dist++, heli_disty++;
 }
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
-	curx = ((screenright - screenleft)/1200.0f)*xpos + screenleft;
-	cury = ((screenbotton - screentop)/600.0f)*ypos + screentop;
-	/*	if(panning_state == 1){
-		if(paninitx - curx < 0 && screenleft >= -600 + fabs(paninitx - curx)){
-		screenleft -= fabs(paninitx - curx);
-		screenright -= fabs(paninitx - curx);
-		}
-		if(paninitx - curx > 0 && screenright <= 600 - fabs(paninitx -curx)){
-		screenleft += fabs(paninitx -curx);
-		screenright += fabs(paninitx -curx);
-		}
-		if(paninity - cury < 0  && screentop >= -300 + fabs(paninity - cury)){
-		screentop -= fabs(paninity - cury);
-		screenbotton -= fabs(paninity - cury);
-		}
-		if(paninity - cury > 0 && screenbotton <= 300 - fabs(paninity -cury)){
-		screentop += fabs(paninity - cury);
-		screenbotton += fabs(paninity -cury);
-		}
-		reshapeWindow(window, 1200, 600);
-		}
-		*/
+	curx = xpos;
+	cury = ypos;
+	if(heli_rotate_state == 1)
+		if(curx - initx < 0)
+			heli_angle=init_heli_angle + fabs(curx - initx) * 0.1;
+		else
+			heli_angle=init_heli_angle - fabs(curx - initx) * 0.1;
 }
 
 
@@ -567,8 +552,13 @@ void mouseButton (GLFWwindow* window, int button, int action, int mods)
 			break;
 		case GLFW_MOUSE_BUTTON_RIGHT:
 			if (action == GLFW_RELEASE) {
+				heli_rotate_state = 0;
 			}
 			if(action == GLFW_PRESS){
+				heli_rotate_state = 1;
+				init_heli_angle = heli_angle;
+				initx = curx;
+				inity = cury;
 			}
 			break;
 		default:
@@ -831,7 +821,7 @@ void createBackground(GLuint *textureID){
 		1,0,
 		1,1
 	};
-
+	skyposy = 200;
 	background[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data, texture_buffer_data, textureID[0], GL_FILL);
 	background[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data, textureID[1], GL_FILL);
 	background[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data, textureID[2], GL_FILL);
@@ -919,6 +909,17 @@ void draw ()
 		case TOWER_VIEW:
 			Matrices.view = glm::lookAt(glm::vec3(0 ,200,180), glm::vec3(0, 0 ,0), glm::vec3(0,1,0));
 			break;
+		case HELI_VIEW:
+			Matrices.view = glm::lookAt(
+					glm::vec3(heli_dist*sin(heli_angle * M_PI/180.0f), heli_disty, heli_dist*cos(heli_angle * M_PI/180.0f)), 
+					glm::vec3(0, 0, 0), 
+					glm::vec3(0,1,0)
+					);
+			if(heli_zoom_in_state == 1 && heli_dist >= 20)
+				heli_dist--, heli_disty--;
+			if(heli_zoom_out_state == 1 && heli_dist <= 180)
+				heli_dist++, heli_disty++;
+			break;
 	}
 
 
@@ -950,7 +951,7 @@ void draw ()
 	for(int i=0;i<nhor;i++){
 		for(int j=0;j<nvert;j++){
 			float xpos,ypos,zpos;
-			if(gamemat[i][j] != 'X'){
+			if(gamemat[i][j] == '.' || gamemat[i][j] == 'B' || gamemat[i][j] == 'T'){
 				xpos = edge*(-nhor/2) + j*edge + edge/2;
 				ypos = 0.1;
 				zpos = edge*(-nvert/2) + i*edge + edge/2;
@@ -999,7 +1000,7 @@ void draw ()
 	for(int i=0;i<nhor;i++){
 		for(int j=0;j<nvert;j++){
 			float xpos,ypos,zpos;
-			if(gamemat[i][j] != 'X'){
+			if(gamemat[i][j] == '.' || gamemat[i][j] == 'B' || gamemat[i][j] == 'T'){
 				xpos = edge*(-nhor/2) + j*edge + edge/2;
 				ypos = 0;
 				zpos = edge*(-nvert/2) + i*edge + edge/2;
@@ -1046,17 +1047,21 @@ void draw ()
 	for(int p=0;p<imblocks.size();p++){
 		int i = imblocks[p].first, j = imblocks[p].second;
 		float xpos = edge*(-nhor/2) + j*edge + edge/2;
-		float ypos = 10;
+		float ypos = impos[p].first;
 		float zpos = edge*(-nvert/2) + i*edge + edge/2;
-		for(int q=1;q<=gamemat[i][j] - '0';q++){
-			Matrices.model = glm::mat4(1.0f);
-			glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
-			Matrices.model *= (translateBlock);
-			MVP = VP * Matrices.model;
-			glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-			draw3DObject(block);
-			ypos += 20;
-		}
+		Matrices.model = glm::mat4(1.0f);
+		glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
+		glm::mat4 tr1 = glm::translate(glm::vec3(0,-10,0));
+		glm::mat4 scl = glm::scale(glm::vec3(1,10,1));
+		Matrices.model *= (translateBlock * scl * tr1);
+		MVP = VP * Matrices.model;
+		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		draw3DObject(block);
+		if(ypos >= BLOCK_TOP_LIMIT)
+			impos[p].second = -1;
+		if(ypos <= -BLOCK_TOP_LIMIT)
+			impos[p].second = 1;
+		impos[p].first += impos[p].second;
 	}
 
 	Matrices.model = glm::mat4(1.0f);
@@ -1066,8 +1071,10 @@ void draw ()
 	Matrices.model *= (translatePlayer * scalePlayer * roatetePlayer);
 	MVP = VP * Matrices.model;
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	draw3DObject(player);
-
+	draw3DObject(block);
+/*	for(int i = 0;i<= N_PARTS;i++){
+		draw3DObject(playerParts[i]);
+*/
 	// Render font on screen
 	static int fontScale = 1;
 	float fontScaleValue = 50 + 0.25*sinf(fontScale*M_PI/180.0f);
@@ -1422,7 +1429,7 @@ int main (int argc, char** argv)
 		/* decode and play */
 		char *p =(char *)buffer;
 		while (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK)
-			ao_play(dev, p, done);
+			;//ao_play(dev, p, done);
 
 
 		/* clean up */
@@ -1435,7 +1442,7 @@ int main (int argc, char** argv)
 		_exit(0);
 	}
 
-	int level = 1;
+	int level = 3;
 	string line;
 	char filename[100];
 	sprintf(filename,"%d.txt",level);
@@ -1465,8 +1472,8 @@ int main (int argc, char** argv)
 				case 'T':
 					treasure.push_back(make_pair(i,j));
 			}
-			if(gamemat[i][j]>='1' && gamemat[i][j]<='9')
-				imblocks.push_back(make_pair(i,j));
+			if(gamemat[i][j]>='0' && gamemat[i][j]<='9')
+				imblocks.push_back(make_pair(i,j)), impos.push_back(make_pair((gamemat[i][j] - '0') * 20,1));
 		}
 
 
