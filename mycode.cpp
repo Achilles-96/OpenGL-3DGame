@@ -520,9 +520,10 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	if(yoffset == 1)
+	if(yoffset == 1){
 		if(heli_dist >= 20)
 			heli_dist--, heli_disty--;
+	}
 	else if(yoffset == -1)
 		if(heli_dist <= 170)
 			heli_dist++, heli_disty++;
