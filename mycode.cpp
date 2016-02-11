@@ -997,6 +997,14 @@ void draw ()
 	//MVP = VP * Matrices.model;
 	//glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	//draw3DObject(temp);
+	Matrices.model = glm::mat4(1.0f);
+	glm::mat4 translatePlayer = glm::translate(glm::vec3(playerposx, playerposy, playerposz));
+	glm::mat4 scalePlayer = glm::scale(glm::vec3(0.5,1,0.5));
+	glm::mat4 roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer * scalePlayer * roatetePlayer);
+	MVP = VP * Matrices.model;
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	draw3DObject(block);
 
 	for(int i=0;i<nhor;i++){
 		for(int j=0;j<nvert;j++){
@@ -1065,14 +1073,6 @@ void draw ()
 		impos[p].first += impos[p].second;
 	}
 
-	Matrices.model = glm::mat4(1.0f);
-	glm::mat4 translatePlayer = glm::translate(glm::vec3(playerposx, playerposy, playerposz));
-	glm::mat4 scalePlayer = glm::scale(glm::vec3(0.5,1,0.5));
-	glm::mat4 roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
-	Matrices.model *= (translatePlayer * scalePlayer * roatetePlayer);
-	MVP = VP * Matrices.model;
-	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	draw3DObject(block);
 /*	for(int i = 0;i<= N_PARTS;i++){
 		draw3DObject(playerParts[i]);
 */
@@ -1241,14 +1241,12 @@ void initGL (GLFWwindow* window, int width, int height)
 	cout << "VERSION: " << glGetString(GL_VERSION) << endl;
 	cout << "GLSL: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 }
-
 int checkPlayerOnBlock(){
 	for(int p = 0;p<blocks.size();p++){
 		int i = blocks[p].first, j = blocks[p].second;
 		float xpos = edge*(-nhor/2) + j*edge + edge/2;
 		float ypos = 10;
 		float zpos = edge*(-nvert/2) + i*edge + edge/2;
-
 		if(playerposx + edge/4 > xpos - edge/2 &&
 				playerposx - edge/4 < xpos + edge/2 &&
 				playerposz + edge/4 > zpos - edge/2 &&
@@ -1259,9 +1257,24 @@ int checkPlayerOnBlock(){
 			return p+1;
 		}
 	}
+	for(int p = 0;p<imblocks.size();p++){
+		int i = imblocks[p].first, j = imblocks[p].second;
+		float xpos = edge*(-nhor/2) + j*edge + edge/2;
+		float ypos = impos[p].first - edge / 2;
+		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+		if(playerposx + edge/4 > xpos - edge/2 &&
+				playerposx - edge/4 < xpos + edge/2 &&
+				playerposz + edge/4 > zpos - edge/2 &&
+				playerposz - edge/4 < zpos + edge/2 &&
+				playerposy - edge/2 <= ypos + edge/2 &&
+				playerposy - edge/2 >= ypos + edge/4
+		  ){
+			return 100 + p+1;
+		}
+	}
 	return 0;
 }
-
+void checkPlayerOnImblock(){}
 void checkFall(){
 	if(playerposx < edge *(-nhor/2) - edge/4 || playerposx > edge*(-nhor/2) +(nhor)*edge + edge/4 ||
 			playerposz > edge*(-nvert/2) + nvert * edge + edge/4 || playerposz < edge *(-nvert/2) - edge/4){
@@ -1275,23 +1288,31 @@ void checkFall(){
 			falling =1;
 	}
 
-	if(checkPlayerOnBlock()){
+	for(int p=0;p<imblocks.size();p++){
+		int i=imblocks[p].first;
+		int j=imblocks[p].second;
+		if(impos[p].first < 0 && playerposz >= edge*(-nhor/2)+i*edge + edge/4 && playerposz <= edge*(-nhor/2) + (i+1)*edge - edge/4 &&
+					playerposx >= edge*(-nvert/2) + j*edge + edge/4 && playerposx <= edge*(-nvert/2) + (j+1)*edge -edge/4)
+				falling =1;
+	}
+	int playerOnBlock = checkPlayerOnBlock();
+	if(playerOnBlock){
 		falling = 0;
 		speedy = 0;
-		playerposy = 10 + edge;
+		if(playerOnBlock<=100)
+			playerposy = 10 + edge;
+		else
+			playerposy = impos[playerOnBlock - 100 - 1].first + edge/2;
 	}
 	if(playerposy <= 10.0f)
 		speedy = 0;
-
 }
-
 void turnPlayer(){
 	if(turn_right)
 		playerAngle += 1;
 	if(turn_left)
 		playerAngle -= 1;
 }
-
 void jumpPlayer(){
 	if(jump == 1){
 		speedy = 5;
@@ -1300,21 +1321,17 @@ void jumpPlayer(){
 	playerposy += speedy;
 	speedy -= 0.5;
 	if(!falling && playerposy <= 10.0f ){
-		playerposy = 10.0f;
+		int playerOnBlock = checkPlayerOnBlock();
+		if(playerOnBlock > 100)
+			playerposy = impos[playerOnBlock - 100 - 1].first + edge/2;
+		else
+			playerposy = 10.0f;
 		speedy = 0;
 	}
 }
-
-int collideBlocks(int direction){
-	for(int p = 0;p<blocks.size();p++){
-		int i = blocks[p].first;
-		int j = blocks[p].second;
-		float xpos = edge*(-nhor/2) + j*edge + edge/2;
-		float ypos = 10;
-		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+int checkCollision(float xpos, float ypos, float zpos, int direction){
 		switch(direction){
 			case 1:
-				//cout<<playerposz<<" "<<zpos<<endl;
 				if(playerposz - cos(playerAngle*M_PI/180.0f) - edge/4 < zpos + edge/2 &&
 						playerposz - cos(playerAngle*M_PI/180.0f) + edge/4 > zpos - edge/2 &&
 						playerposx + edge/4 > xpos - edge/2 &&
@@ -1352,18 +1369,37 @@ int collideBlocks(int direction){
 				break;
 
 		}
+		return 0;
+}
+int collideBlocks(int direction){
+	for(int p = 0;p<blocks.size();p++){
+		int i = blocks[p].first;
+		int j = blocks[p].second;
+		float xpos = edge*(-nhor/2) + j*edge + edge/2;
+		float ypos = 10;
+		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+		if(checkCollision(xpos, ypos, zpos, direction) == 1)
+			return 1;
+	}
+	for(int p = 0;p<imblocks.size();p++){
+		int i = imblocks[p].first;
+		int j = imblocks[p].second;
+		float xpos = edge*(-nhor/2) + j*edge + edge/2;
+		float ypos = impos[p].first - edge/2;
+		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+		if(impos[p].first > 0 && checkCollision(xpos, ypos, zpos, direction) == 1 )
+			return 1;
 	}
 	return 0;
 }
-
-
 void movePlayer(){
 	turnPlayer();
 	jumpPlayer();
 	int playerOnBlock = checkPlayerOnBlock();
-	if(playerOnBlock){
+	if(playerOnBlock && playerOnBlock <= 100){
 		playerAngle--;
 	}
+	checkPlayerOnImblock();
 	int front = 1, back = 2, right = 3, left =4;
 	if(movefront == 1 && !falling && !collideBlocks(1))
 		playerposz-=cos(playerAngle*M_PI/180.0f), playerposx+=sin(playerAngle*M_PI/180.0f);
@@ -1373,12 +1409,10 @@ void movePlayer(){
 		playerposx+=cos(playerAngle*M_PI/180.0f), playerposz+=sin(playerAngle*M_PI/180.0f);
 	if(moveback == 1 && !falling && !collideBlocks(2))
 		playerposz+=cos(playerAngle*M_PI/180.0f), playerposx-=sin(playerAngle*M_PI/180.0f);
-
 	checkFall();
 	if(falling)
 		playerposy--;
 }
-
 int main (int argc, char** argv)
 {
 	int width = 1200;
