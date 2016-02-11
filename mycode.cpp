@@ -377,7 +377,7 @@ float heli_angle, init_heli_angle;
 int heli_rotate_state = 0, heli_zoom_in_state = 0, heli_zoom_out_state = 0;
 float heli_dist = 180, heli_disty = 200;
 
-int open_portal = 1;
+int open_portal = 0;
 float portal_pos = -10;
 
 vector<pair<int,int> > holes, blocks, imblocks, treasure, impos;
@@ -1012,15 +1012,16 @@ void draw ()
 
 	if(open_portal == 1){
 		Matrices.model = glm::mat4(1.0f);
-		glm::mat4 translatePlayer = glm::translate(glm::vec3(edge*(-nhor/2) + edge/2, portal_pos, edge*(-nvert/2) + edge/2));
+		//glm::mat4 translatePlayer = glm::translate(glm::vec3(edge*(-nhor/2) + edge/2, portal_pos, edge*(-nvert/2) + edge/2));
+		glm::mat4 translatePlayer = glm::translate(glm::vec3(edge * (nhor/2) - edge/2,portal_pos, edge *(-nvert/2) + edge/2));
 		glm::mat4 scalePlayer = glm::scale(glm::vec3(0.5,1,0.5));
 		glm::mat4 rotateBlock = glm::rotate((float)(angle * M_PI/180.0f),glm::vec3(0,1,0));
 		Matrices.model *= (translatePlayer * rotateBlock * scalePlayer);
 		MVP = VP * Matrices.model;
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		draw3DObject(block);
-		portal_pos += 1;
-		portal_pos = max(portal_pos,10.0f);
+		portal_pos += 0.2;
+		portal_pos = min(portal_pos,10.0f);
 	}
 
 	for(int i=0;i<nhor;i++){
@@ -1059,7 +1060,7 @@ void draw ()
 	for(int p=0;p<treasure.size();p++){
 		int i = treasure[p].first, j = treasure[p].second;
 		float xpos = edge*(-nhor/2) + j*edge + edge/2;
-		float ypos = 10;
+		float ypos = 5;
 		float zpos = edge*(-nvert/2) + i*edge + edge/2;
 		Matrices.model = glm::mat4(1.0f);
 		glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
@@ -1416,6 +1417,21 @@ int collideBlocks(int direction){
 	int playerOnBlock = checkPlayerOnBlock();
 	return 0;
 }
+void collectTreasure(){
+	for(int p = 0;p<treasure.size();p++){
+		int i = treasure[p].first;
+		int j = treasure[p].second;
+		float xpos = edge*(-nhor/2) + j*edge + edge/2;
+		float ypos = 5;
+		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+		if(playerposx + edge/4 >= xpos - edge/2 && playerposx - edge/4 <= xpos + edge/2 &&
+				playerposz + edge/4 >= zpos - edge/2 && playerposz - edge/4 <= zpos + edge/2 &&
+				playerposy + edge/2 >= ypos - edge/2 && playerposy - edge/2 <= ypos + edge/2){
+			treasure.erase(treasure.begin() + p);
+			return;
+		}
+	}
+}
 void movePlayer(){
 	turnPlayer();
 	if(jump == 0)checkFall();
@@ -1426,6 +1442,9 @@ void movePlayer(){
 	}
 	checkPlayerOnImblock();
 	int front = 1, back = 2, right = 3, left =4;
+	collectTreasure();
+	if(!treasure.size())
+		open_portal = 1;
 	if(movefront == 1 && !falling && !collideBlocks(1))
 		playerposz-=cos(playerAngle*M_PI/180.0f), playerposx+=sin(playerAngle*M_PI/180.0f);
 	if(moveleft == 1 && !falling && !collideBlocks(4))
@@ -1435,6 +1454,20 @@ void movePlayer(){
 	if(moveback == 1 && !falling && !collideBlocks(2))
 		playerposz+=cos(playerAngle*M_PI/180.0f), playerposx-=sin(playerAngle*M_PI/180.0f);
 }
+int portal_reached(){
+	if(!open_portal)
+		return 0;
+	float xpos = edge * (nhor/2) - edge/2;
+	float ypos = portal_pos;
+	float zpos = edge *(-nvert/2) + edge/2;
+	if(playerposx + edge/4 >= xpos - edge/2 && playerposx - edge/4 <= xpos + edge/2 &&
+			playerposz + edge/4 >= zpos - edge/2 && playerposz - edge/4 <= zpos + edge/2 &&
+			playerposy + edge/2 >= ypos - edge/2 && playerposy - edge/2 <= ypos + edge/2)
+		return 1;
+	return 0;
+}
+
+
 int main (int argc, char** argv)
 {
 	int width = 1200;
@@ -1499,57 +1532,68 @@ int main (int argc, char** argv)
 		_exit(0);
 	}
 
-	int level = 3;
-	string line;
-	char filename[100];
-	sprintf(filename,"%d.txt",level);
-	ifstream levelfile(filename);
-	if(levelfile.is_open()){
-		int i=0;
-		while(getline(levelfile, line)){
-			cout<<line<<endl;
-			for(int j=0;line[j]!='\0';j++)
-				gamemat[i][j]=line[j];
-			i++;
-		}
-		levelfile.close();
-	}
-	else
-		cout<<"Unable to open file";
-
-	for(int i= 0;i<nhor;i++)
-		for(int j=0;j<nvert;j++){
-			switch(gamemat[i][j]){
-				case 'X':
-					holes.push_back(make_pair(i,j));
-					break;
-				case 'B':
-					blocks.push_back(make_pair(i,j));
-					break;
-				case 'T':
-					treasure.push_back(make_pair(i,j));
+	int level = 1;
+	while(1){
+		string line;
+		char filename[100];
+		sprintf(filename,"%d.txt",level);
+		ifstream levelfile(filename);
+		if(levelfile.is_open()){
+			int i=0;
+			while(getline(levelfile, line)){
+				cout<<line<<endl;
+				for(int j=0;line[j]!='\0';j++)
+					gamemat[i][j]=line[j];
+				i++;
 			}
-			if(gamemat[i][j]>='0' && gamemat[i][j]<='9')
-				imblocks.push_back(make_pair(i,j)), impos.push_back(make_pair((gamemat[i][j] - '0') * 20,1));
+			levelfile.close();
 		}
+		else
+			cout<<"Unable to open file";
+
+		for(int i= 0;i<nhor;i++)
+			for(int j=0;j<nvert;j++){
+				switch(gamemat[i][j]){
+					case 'X':
+						holes.push_back(make_pair(i,j));
+						break;
+					case 'B':
+						blocks.push_back(make_pair(i,j));
+						break;
+					case 'T':
+						treasure.push_back(make_pair(i,j));
+				}
+				if(gamemat[i][j]>='0' && gamemat[i][j]<='9')
+					imblocks.push_back(make_pair(i,j)), impos.push_back(make_pair((gamemat[i][j] - '0') * 20,1));
+			}
 
 
-	/* Draw in loop */
-	while (!glfwWindowShouldClose(window)) {
-		movePlayer();
-		draw();
+		/* Draw in loop */
+		while (!glfwWindowShouldClose(window)) {
+			movePlayer();
+			draw();
 
-		// Swap Frame Buffer in double buffering
-		glfwSwapBuffers(window);
+			// Swap Frame Buffer in double buffering
+			glfwSwapBuffers(window);
 
-		// Poll for Keyboard and mouse events
-		glfwPollEvents();
+			// Poll for Keyboard and mouse events
+			glfwPollEvents();
 
-		// Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
-		current_time = glfwGetTime(); // Time in seconds
-		if ((current_time - last_update_time) >= 0.5) { // atleast 0.5s elapsed since last frame
-			// do something every 0.5 seconds ..
-			last_update_time = current_time;
+			// Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
+			current_time = glfwGetTime(); // Time in seconds
+			if ((current_time - last_update_time) >= 0.5) { // atleast 0.5s elapsed since last frame
+				// do something every 0.5 seconds ..
+				last_update_time = current_time;
+			}
+			if(portal_reached()){
+				open_portal = 0;
+				playerposx = edge*(-nhor/2) + edge/2;
+				playerposy = 10;
+				playerposz = edge*(-nvert/2) + (nvert - 1)*edge + edge/2;
+				playerAngle = 0;
+				level++;
+				break;
+			}
 		}
 	}
 
