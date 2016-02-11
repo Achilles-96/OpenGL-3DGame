@@ -36,6 +36,7 @@ pid_t pid;
 using namespace std;
 void reshapeWindow (GLFWwindow* window, int width, int height);
 
+int checkPlayerOnBlock();
 class VAO {
 	public:
 		GLuint VertexArrayID;
@@ -376,6 +377,9 @@ float heli_angle, init_heli_angle;
 int heli_rotate_state = 0, heli_zoom_in_state = 0, heli_zoom_out_state = 0;
 float heli_dist = 180, heli_disty = 200;
 
+int open_portal = 1;
+float portal_pos = -10;
+
 vector<pair<int,int> > holes, blocks, imblocks, treasure, impos;
 
 int playerOnGround(){
@@ -399,7 +403,6 @@ int playerOnGround(){
 	}
 	return 0;
 }
-
 void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	// Function is called first on GLFW_PRESS.
@@ -497,8 +500,9 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 				turn_right = 1;
 				break;
 			case GLFW_KEY_SPACE:
-				if(playerOnGround())
-					jump = 1;
+				if(playerOnGround() || checkPlayerOnBlock()){
+					speedy = 5, jump = 1;
+				}
 			default:
 				break;
 		}
@@ -1006,6 +1010,19 @@ void draw ()
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	draw3DObject(block);
 
+	if(open_portal == 1){
+		Matrices.model = glm::mat4(1.0f);
+		glm::mat4 translatePlayer = glm::translate(glm::vec3(edge*(-nhor/2) + edge/2, portal_pos, edge*(-nvert/2) + edge/2));
+		glm::mat4 scalePlayer = glm::scale(glm::vec3(0.5,1,0.5));
+		glm::mat4 rotateBlock = glm::rotate((float)(angle * M_PI/180.0f),glm::vec3(0,1,0));
+		Matrices.model *= (translatePlayer * rotateBlock * scalePlayer);
+		MVP = VP * Matrices.model;
+		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		draw3DObject(block);
+		portal_pos += 1;
+		portal_pos = max(portal_pos,10.0f);
+	}
+
 	for(int i=0;i<nhor;i++){
 		for(int j=0;j<nvert;j++){
 			float xpos,ypos,zpos;
@@ -1265,9 +1282,7 @@ int checkPlayerOnBlock(){
 		if(playerposx + edge/4 > xpos - edge/2 &&
 				playerposx - edge/4 < xpos + edge/2 &&
 				playerposz + edge/4 > zpos - edge/2 &&
-				playerposz - edge/4 < zpos + edge/2 &&
-				playerposy - edge/2 <= ypos + edge/2 &&
-				playerposy - edge/2 >= ypos + edge/4
+				playerposz - edge/4 < zpos + edge/2 
 		  ){
 			return 100 + p+1;
 		}
@@ -1278,34 +1293,37 @@ void checkPlayerOnImblock(){}
 void checkFall(){
 	if(playerposx < edge *(-nhor/2) - edge/4 || playerposx > edge*(-nhor/2) +(nhor)*edge + edge/4 ||
 			playerposz > edge*(-nvert/2) + nvert * edge + edge/4 || playerposz < edge *(-nvert/2) - edge/4){
-		falling = 1;
+		playerposy--;
+		return;
 	}
 	for(int p=0;p<holes.size();p++){
 		int i = holes[p].first;
 		int j = holes[p].second;
 		if(playerposz >= edge*(-nhor/2)+i*edge + edge/4 && playerposz <= edge*(-nhor/2) + (i+1)*edge - edge/4 &&
-				playerposx >= edge*(-nvert/2) + j*edge + edge/4 && playerposx <= edge*(-nvert/2) + (j+1)*edge -edge/4)
-			falling =1;
-	}
-
-	for(int p=0;p<imblocks.size();p++){
-		int i=imblocks[p].first;
-		int j=imblocks[p].second;
-		if(impos[p].first < 0 && playerposz >= edge*(-nhor/2)+i*edge + edge/4 && playerposz <= edge*(-nhor/2) + (i+1)*edge - edge/4 &&
-					playerposx >= edge*(-nvert/2) + j*edge + edge/4 && playerposx <= edge*(-nvert/2) + (j+1)*edge -edge/4)
-				falling =1;
+				playerposx >= edge*(-nvert/2) + j*edge + edge/4 && playerposx <= edge*(-nvert/2) + (j+1)*edge -edge/4){
+			playerposy--;
+			return;
+		}
 	}
 	int playerOnBlock = checkPlayerOnBlock();
 	if(playerOnBlock){
 		falling = 0;
 		speedy = 0;
-		if(playerOnBlock<=100)
+		if(playerOnBlock<=100){
 			playerposy = 10 + edge;
-		else
+			return;
+		}
+		else if(playerposy - edge/2 > impos[playerOnBlock - 100 -1].first){
+			playerposy--;
+			return;
+		}
+		else{
 			playerposy = impos[playerOnBlock - 100 - 1].first + edge/2;
+			return;
+		}
 	}
-	if(playerposy <= 10.0f)
-		speedy = 0;
+	else if(!playerOnGround())
+		playerposy--;
 }
 void turnPlayer(){
 	if(turn_right)
@@ -1315,18 +1333,23 @@ void turnPlayer(){
 }
 void jumpPlayer(){
 	if(jump == 1){
-		speedy = 5;
-		jump = 0;
-	}
-	playerposy += speedy;
-	speedy -= 0.5;
-	if(!falling && playerposy <= 10.0f ){
+		playerposy += speedy;
 		int playerOnBlock = checkPlayerOnBlock();
-		if(playerOnBlock > 100)
-			playerposy = impos[playerOnBlock - 100 - 1].first + edge/2;
+		if(playerOnBlock)
+			if(playerOnBlock<=100 ||
+					(playerOnBlock > 100 && playerposy - edge/2 <= impos[playerOnBlock - 100 -1].first)|| 
+					playerOnGround()){
+				speedy = 0;
+				jump = 0;
+			}
+			else
+				speedy -= 0.5;
 		else
-			playerposy = 10.0f;
-		speedy = 0;
+			if(playerOnGround())
+				speedy = 0,jump = 0;
+			else
+				speedy -= 0.5;
+
 	}
 }
 int checkCollision(float xpos, float ypos, float zpos, int direction){
@@ -1390,10 +1413,12 @@ int collideBlocks(int direction){
 		if(impos[p].first > 0 && checkCollision(xpos, ypos, zpos, direction) == 1 )
 			return 1;
 	}
+	int playerOnBlock = checkPlayerOnBlock();
 	return 0;
 }
 void movePlayer(){
 	turnPlayer();
+	if(jump == 0)checkFall();
 	jumpPlayer();
 	int playerOnBlock = checkPlayerOnBlock();
 	if(playerOnBlock && playerOnBlock <= 100){
@@ -1409,9 +1434,6 @@ void movePlayer(){
 		playerposx+=cos(playerAngle*M_PI/180.0f), playerposz+=sin(playerAngle*M_PI/180.0f);
 	if(moveback == 1 && !falling && !collideBlocks(2))
 		playerposz+=cos(playerAngle*M_PI/180.0f), playerposx-=sin(playerAngle*M_PI/180.0f);
-	checkFall();
-	if(falling)
-		playerposy--;
 }
 int main (int argc, char** argv)
 {
@@ -1514,8 +1536,6 @@ int main (int argc, char** argv)
 
 	/* Draw in loop */
 	while (!glfwWindowShouldClose(window)) {
-
-
 		movePlayer();
 		draw();
 
