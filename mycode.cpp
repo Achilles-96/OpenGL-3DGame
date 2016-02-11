@@ -30,6 +30,7 @@ pid_t pid;
 #define ADV_VIEW 3
 #define FOLLOW_VIEW 4
 #define HELI_VIEW 5
+#define PORTAL_VIEW 6
 
 #define BLOCK_TOP_LIMIT 120
 
@@ -362,6 +363,8 @@ double curx, cury, initx, inity;
 int movefront = 0, moveback = 0, moveleft = 0, moveright = 0;
 char gamemat[11][11];
 int camera_view =  TOWER_VIEW;
+int camera_switch_state = 0;
+int saved_camera;
 int turn_right = 0, turn_left = 0, jump = 0;
 float speedy = 0;
 /* Executed when a regular key is pressed/released/held-down */
@@ -925,6 +928,10 @@ void draw ()
 			if(heli_zoom_out_state == 1 && heli_dist <= 180)
 				heli_dist++, heli_disty++;
 			break;
+		case PORTAL_VIEW:
+			Matrices.view = glm::lookAt(glm::vec3(120 ,120,0), glm::vec3(edge * (nhor/2) - edge/2,portal_pos, edge *(-nvert/2) + edge/2), glm::vec3(0,1,0));
+			break;
+
 	}
 
 
@@ -1022,6 +1029,8 @@ void draw ()
 		draw3DObject(block);
 		portal_pos += 0.2;
 		portal_pos = min(portal_pos,10.0f);
+		if(camera_switch_state == 0 && portal_pos == 10.0f)
+			camera_view = saved_camera, camera_switch_state = 1;
 	}
 
 	for(int i=0;i<nhor;i++){
@@ -1428,6 +1437,8 @@ void collectTreasure(){
 				playerposz + edge/4 >= zpos - edge/2 && playerposz - edge/4 <= zpos + edge/2 &&
 				playerposy + edge/2 >= ypos - edge/2 && playerposy - edge/2 <= ypos + edge/2){
 			treasure.erase(treasure.begin() + p);
+			saved_camera = camera_view;
+			camera_view = PORTAL_VIEW;
 			return;
 		}
 	}
@@ -1587,10 +1598,12 @@ int main (int argc, char** argv)
 			}
 			if(portal_reached()){
 				open_portal = 0;
+				portal_pos = -10;
 				playerposx = edge*(-nhor/2) + edge/2;
 				playerposy = 10;
 				playerposz = edge*(-nvert/2) + (nvert - 1)*edge + edge/2;
 				playerAngle = 0;
+				camera_switch_state = 0;
 				level++;
 				break;
 			}
