@@ -605,7 +605,109 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 
 
 float camera_rotation_angle = 90;
-VAO *block, *block_layer, *background[6], *player, *treasure_block;
+VAO *block, *block_layer, *background[6], *player, *treasure_block, *rotBlock[6];
+void createRotatingBlock(GLuint textureID, GLuint textureID2){
+	static const GLfloat vertex_buffer_data0[] = {
+		-10, 10, 10,
+		-10, -10, 10,
+		10, 10, 10,
+
+		-10, -10, 10,
+		10, 10, 10,
+		10, -10, 10,
+	};
+
+	static const GLfloat texture_buffer_data0[] = {
+		0, 0,
+		0, 1,
+		1, 0,
+
+		0, 1,
+		1, 0,
+		1, 1,
+	};
+	rotBlock[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, textureID, GL_FILL);
+
+	static const GLfloat vertex_buffer_data1[] = {
+		-10, 10, -10,
+		-10, -10, -10,
+		10, 10, -10,
+
+		-10, -10, -10,
+		10, 10, -10,
+		10, -10, -10,
+	};
+	static const GLfloat texture_buffer_data1[] = {
+		0, 0,
+		0, 1,
+		1, 0,
+
+		0, 1,
+		1, 0,
+		1, 1,
+	};
+	rotBlock[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data1, textureID, GL_FILL);
+
+	static const GLfloat vertex_buffer_data2[] = {
+		10, 10, 10,
+		10, -10, 10,
+		10, -10, -10,
+
+		10, 10, 10,
+		10, -10, -10,
+		10, 10, -10,
+	};
+	static const GLfloat texture_buffer_data2[] = {
+		0, 0,
+		0, 1,
+		1, 1,
+
+		0, 0,
+		1, 1,
+		1, 0,
+	};
+	rotBlock[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data2, textureID, GL_FILL);
+
+	static const GLfloat vertex_buffer_data3[] = {
+		-10, 10, 10,
+		-10, -10, 10,
+		-10, -10, -10,
+
+		-10, 10, 10,
+		-10, -10, -10,
+		-10, 10, -10,
+	};
+	static const GLfloat texture_buffer_data3[] = {
+		0, 0,
+		0, 1,
+		1, 1,
+
+		0, 0,
+		1, 1,
+		1, 0,
+	};
+	rotBlock[3] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data3, texture_buffer_data3, textureID, GL_FILL);
+
+	static const GLfloat vertex_buffer_data4[] = {
+		-10, 10, 10,
+		10, 10, 10,
+		10, 10, -10,
+
+		-10, 10, 10,
+		10, 10, -10,
+		-10, 10, -10,
+	};
+	static const GLfloat texture_buffer_data4[] = {
+		0, 0,
+		0, 1,
+		1, 0,
+
+		0, 0,
+		1, 0,
+		1, 1,
+	};
+	rotBlock[4] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data4, texture_buffer_data4, textureID2, GL_FILL);
+}
 void createBlock(){
 	static const GLfloat vertex_buffer_data [] = {
 		-10, 10, 10,
@@ -978,6 +1080,20 @@ void draw ()
 			}
 		}
 	}
+	for(int p=0;p<blocks.size();p++){
+		int i = blocks[p].first, j = blocks[p].second;
+		float xpos = edge*(-nhor/2) + j*edge + edge/2;
+		float ypos = 10;
+		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+		Matrices.model = glm::mat4(1.0f);
+		glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
+		glm::mat4 rotateBlock = glm::rotate((float)(angle * M_PI/180.0f),glm::vec3(0,1,0));
+		Matrices.model *= (translateBlock * rotateBlock);
+		MVP = VP * Matrices.model;
+		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		for(int q = 0;q<5;q++)
+			draw3DTexturedObject(rotBlock[q]);
+	}
 
 	glUseProgram (programID);
 	// Load identity to model matrix
@@ -1050,20 +1166,6 @@ void draw ()
 				draw3DObject(block);
 			}
 		}
-	}
-
-	for(int p=0;p<blocks.size();p++){
-		int i = blocks[p].first, j = blocks[p].second;
-		float xpos = edge*(-nhor/2) + j*edge + edge/2;
-		float ypos = 10;
-		float zpos = edge*(-nvert/2) + i*edge + edge/2;
-		Matrices.model = glm::mat4(1.0f);
-		glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
-		glm::mat4 rotateBlock = glm::rotate((float)(angle * M_PI/180.0f),glm::vec3(0,1,0));
-		Matrices.model *= (translateBlock * rotateBlock);
-		MVP = VP * Matrices.model;
-		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-		draw3DObject(block);
 	}
 
 	for(int p=0;p<treasure.size();p++){
@@ -1190,7 +1292,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	// load an image file directly as a new OpenGL texture
 	// GLuint texID = SOIL_load_OGL_texture ("beach.png", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS); // Buggy for OpenGL3
 	//GLuint textureID = createTexture("background.png");
-	GLuint textureID[7], building_top;
+	GLuint textureID[7], building_top, rot_block, rot_block_top;
 	textureID[0] = createTexture("images/front.png");
 	textureID[1] = createTexture("images/top.png");
 	textureID[2] = createTexture("images/left.png");
@@ -1198,6 +1300,8 @@ void initGL (GLFWwindow* window, int width, int height)
 	textureID[4] = createTexture("images/back.png");
 	textureID[5] = createTexture("images/bottom.png");
 	building_top = createTexture("images/toptexture.png");
+	rot_block = createTexture("images/rotatingblock.png");
+	rot_block_top = createTexture("images/rotBlockTop.png");
 
 
 	// check for an error during the load process
@@ -1216,6 +1320,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	// Generate the VAO, VBOs, vertices data & copy into the array buffer
 	createBackground (textureID);
 	createBlockLayer (building_top);
+	createRotatingBlock (rot_block, rot_block_top);
 	createBlock();
 	//createCatapult2();
 
