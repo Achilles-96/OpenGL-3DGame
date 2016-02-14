@@ -362,7 +362,7 @@ float screenleft = -600.0f, screenright = 600.0f, screentop = -300.0f, screenbot
 double curx, cury, initx, inity;
 int movefront = 0, moveback = 0, moveleft = 0, moveright = 0;
 char gamemat[11][11];
-int camera_view =  TOWER_VIEW;
+int camera_view =  ADV_VIEW;
 int camera_switch_state = 0;
 int saved_camera;
 int turn_right = 0, turn_left = 0, jump = 0;
@@ -605,8 +605,8 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 
 
 float camera_rotation_angle = 90;
-VAO *block, *block_layer, *background[6], *player, *treasure_block, *rotBlock[6];
-void createRotatingBlock(GLuint textureID, GLuint textureID2){
+VAO *block, *block_layer[6], *background[6], *player, *treasure_block, *rotBlock[6], *oscillator[6];
+void createRotatingBlock(GLuint textureID, GLuint textureID2, GLuint textureID3,GLuint textureID5,GLuint textureID4, GLuint textureID6){
 	static const GLfloat vertex_buffer_data0[] = {
 		-10, 10, 10,
 		-10, -10, 10,
@@ -627,6 +627,8 @@ void createRotatingBlock(GLuint textureID, GLuint textureID2){
 		1, 1,
 	};
 	rotBlock[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, textureID, GL_FILL);
+	oscillator[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, textureID6, GL_FILL);
+	block_layer[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, textureID4, GL_FILL);
 
 	static const GLfloat vertex_buffer_data1[] = {
 		-10, 10, -10,
@@ -647,6 +649,8 @@ void createRotatingBlock(GLuint textureID, GLuint textureID2){
 		1, 1,
 	};
 	rotBlock[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data1, textureID, GL_FILL);
+	oscillator[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data1, textureID6, GL_FILL);
+	block_layer[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data1, textureID4, GL_FILL);
 
 	static const GLfloat vertex_buffer_data2[] = {
 		10, 10, 10,
@@ -667,6 +671,8 @@ void createRotatingBlock(GLuint textureID, GLuint textureID2){
 		1, 0,
 	};
 	rotBlock[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data2, textureID, GL_FILL);
+	oscillator[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data2, textureID6, GL_FILL);
+	block_layer[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data2, textureID4, GL_FILL);
 
 	static const GLfloat vertex_buffer_data3[] = {
 		-10, 10, 10,
@@ -687,6 +693,8 @@ void createRotatingBlock(GLuint textureID, GLuint textureID2){
 		1, 0,
 	};
 	rotBlock[3] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data3, texture_buffer_data3, textureID, GL_FILL);
+	oscillator[3] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data3, texture_buffer_data3, textureID6, GL_FILL);
+	block_layer[3] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data3, texture_buffer_data3, textureID4, GL_FILL);
 
 	static const GLfloat vertex_buffer_data4[] = {
 		-10, 10, 10,
@@ -707,6 +715,8 @@ void createRotatingBlock(GLuint textureID, GLuint textureID2){
 		1, 1,
 	};
 	rotBlock[4] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data4, texture_buffer_data4, textureID2, GL_FILL);
+	oscillator[4] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data4, texture_buffer_data4, textureID3, GL_FILL);
+	block_layer[4] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data4, texture_buffer_data4, textureID5, GL_FILL);
 }
 void createBlock(){
 	static const GLfloat vertex_buffer_data [] = {
@@ -960,13 +970,12 @@ void createBlockLayer(GLuint textureID){
 		1, 0,
 		1, 1,
 	};
-	block_layer = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_datap, texture_buffer_datap, textureID, GL_FILL);
+	//block_layer = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_datap, texture_buffer_datap, textureID, GL_FILL);
 }
 
 float dist = 200;
 float angle = 0;
 float zdist = 200;
-
 
 void draw ()
 {
@@ -1076,7 +1085,8 @@ void draw ()
 				Matrices.model *= ( translateBox * scl * tr1);
 				MVP = VP * Matrices.model;
 				glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-				draw3DTexturedObject(block_layer);
+				for(int q=0;q<5;q++)
+					draw3DTexturedObject(block_layer[q]);
 			}
 		}
 	}
@@ -1095,6 +1105,26 @@ void draw ()
 			draw3DTexturedObject(rotBlock[q]);
 	}
 
+	for(int p=0;p<imblocks.size();p++){
+		int i = imblocks[p].first, j = imblocks[p].second;
+		float xpos = edge*(-nhor/2) + j*edge + edge/2;
+		float ypos = impos[p].first;
+		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+		Matrices.model = glm::mat4(1.0f);
+		glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
+		glm::mat4 tr1 = glm::translate(glm::vec3(0,-10,0));
+		glm::mat4 scl = glm::scale(glm::vec3(1,10,1));
+		Matrices.model *= (translateBlock *  tr1);
+		MVP = VP * Matrices.model;
+		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		for(int q=0;q<5;q++)
+			draw3DTexturedObject(oscillator[q]);
+		if(ypos >= BLOCK_TOP_LIMIT)
+			impos[p].second = -1;
+		if(ypos <= -BLOCK_TOP_LIMIT)
+			impos[p].second = 1;
+		impos[p].first += impos[p].second;
+	}
 	glUseProgram (programID);
 	// Load identity to model matrix
 	Matrices.model = glm::mat4(1.0f);
@@ -1149,25 +1179,6 @@ void draw ()
 			camera_view = saved_camera, camera_switch_state = 1;
 	}
 
-	for(int i=0;i<nhor;i++){
-		for(int j=0;j<nvert;j++){
-			float xpos,ypos,zpos;
-			if(gamemat[i][j] == '.' || gamemat[i][j] == 'B' || gamemat[i][j] == 'T'){
-				xpos = edge*(-nhor/2) + j*edge + edge/2;
-				ypos = 0;
-				zpos = edge*(-nvert/2) + i*edge + edge/2;
-				Matrices.model = glm::mat4(1.0f);
-				glm::mat4 tr1 = glm::translate(glm::vec3(0,-10,0));
-				glm::mat4 translateBox = glm::translate(glm::vec3(xpos,ypos,zpos));
-				glm::mat4 scl = glm::scale(glm::vec3(1,10,1));
-				Matrices.model *= ( translateBox * scl * tr1);
-				MVP = VP * Matrices.model;
-				glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-				draw3DObject(block);
-			}
-		}
-	}
-
 	for(int p=0;p<treasure.size();p++){
 		int i = treasure[p].first, j = treasure[p].second;
 		float xpos = edge*(-nhor/2) + j*edge + edge/2;
@@ -1181,27 +1192,6 @@ void draw ()
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		draw3DObject(treasure_block);
 	}
-
-	for(int p=0;p<imblocks.size();p++){
-		int i = imblocks[p].first, j = imblocks[p].second;
-		float xpos = edge*(-nhor/2) + j*edge + edge/2;
-		float ypos = impos[p].first;
-		float zpos = edge*(-nvert/2) + i*edge + edge/2;
-		Matrices.model = glm::mat4(1.0f);
-		glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
-		glm::mat4 tr1 = glm::translate(glm::vec3(0,-10,0));
-		glm::mat4 scl = glm::scale(glm::vec3(1,10,1));
-		Matrices.model *= (translateBlock * scl * tr1);
-		MVP = VP * Matrices.model;
-		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-		draw3DObject(block);
-		if(ypos >= BLOCK_TOP_LIMIT)
-			impos[p].second = -1;
-		if(ypos <= -BLOCK_TOP_LIMIT)
-			impos[p].second = 1;
-		impos[p].first += impos[p].second;
-	}
-
 /*	for(int i = 0;i<= N_PARTS;i++){
 		draw3DObject(playerParts[i]);
 */
@@ -1292,7 +1282,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	// load an image file directly as a new OpenGL texture
 	// GLuint texID = SOIL_load_OGL_texture ("beach.png", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS); // Buggy for OpenGL3
 	//GLuint textureID = createTexture("background.png");
-	GLuint textureID[7], building_top, rot_block, rot_block_top;
+	GLuint textureID[7], building_top, rot_block, rot_block_top, oscillate_block, floor_block_side, oscillate_block_side;
 	textureID[0] = createTexture("images/front.png");
 	textureID[1] = createTexture("images/top.png");
 	textureID[2] = createTexture("images/left.png");
@@ -1302,7 +1292,9 @@ void initGL (GLFWwindow* window, int width, int height)
 	building_top = createTexture("images/toptexture.png");
 	rot_block = createTexture("images/rotatingblock.png");
 	rot_block_top = createTexture("images/rotBlockTop.png");
-
+	oscillate_block = createTexture("images/oscillate.png");
+	floor_block_side = createTexture("images/block_layer_side.png");
+	oscillate_block_side = createTexture("images/oscSide.png");
 
 	// check for an error during the load process
 	for(int i =0;i<5;i++)
@@ -1320,7 +1312,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	// Generate the VAO, VBOs, vertices data & copy into the array buffer
 	createBackground (textureID);
 	createBlockLayer (building_top);
-	createRotatingBlock (rot_block, rot_block_top);
+	createRotatingBlock (rot_block, rot_block_top, oscillate_block, building_top, floor_block_side, oscillate_block_side);
 	createBlock();
 	//createCatapult2();
 
@@ -1428,7 +1420,7 @@ void checkFall(){
 			playerposy = 10 + edge;
 			return;
 		}
-		else if(playerposy - edge/2 > impos[playerOnBlock - 100 -1].first){
+		else if(playerposy - edge/2 > impos[playerOnBlock - 100 -1].first || playerposy + edge/2 < impos[playerOnBlock - 100 - 1].first - edge){
 			playerposy--;
 			return;
 		}
@@ -1474,7 +1466,8 @@ int checkCollision(float xpos, float ypos, float zpos, int direction){
 						playerposz - cos(playerAngle*M_PI/180.0f) + edge/4 > zpos - edge/2 &&
 						playerposx + edge/4 > xpos - edge/2 &&
 						playerposx - edge/4 < xpos + edge/2 &&
-						playerposy - edge/4 < ypos + edge/2
+						playerposy - edge/4 < ypos + edge/2 &&
+						playerposy + edge/4 > ypos - edge/2
 				  )
 					return 1;
 				break;
@@ -1483,7 +1476,8 @@ int checkCollision(float xpos, float ypos, float zpos, int direction){
 						playerposz + cos(playerAngle*M_PI/180.0f) - edge/4 < zpos + edge/2 &&
 						playerposx + edge/4 > xpos - edge/2 &&
 						playerposx - edge/4 < xpos + edge/2 &&
-						playerposy - edge/4 < ypos + edge/2
+						playerposy - edge/4 < ypos + edge/2 &&
+						playerposy + edge/4 > ypos - edge/2
 				  )
 					return 1;
 				break;
@@ -1492,7 +1486,8 @@ int checkCollision(float xpos, float ypos, float zpos, int direction){
 						playerposx + cos(playerAngle*M_PI/180.0f) - edge/4 < xpos + edge/2 &&
 						playerposz - edge/4 < zpos + edge/2 &&
 						playerposz + edge/4 > zpos - edge/2 &&
-						playerposy - edge/4 < ypos + edge/2
+						playerposy - edge/4 < ypos + edge/2 &&
+						playerposy + edge/4 > ypos - edge/2
 				  )
 					return 1;
 				break;
@@ -1501,7 +1496,8 @@ int checkCollision(float xpos, float ypos, float zpos, int direction){
 						playerposx - cos(playerAngle*M_PI/180.0f) + edge/4 > xpos - edge/2 &&
 						playerposz - edge/4 < zpos + edge/2 &&
 						playerposz + edge/4 > zpos - edge/2 &&
-						playerposy - edge/4 < ypos + edge/2
+						playerposy - edge/4 < ypos + edge/2 &&
+						playerposy + edge/4 > ypos - edge/2
 				  )
 					return 1;
 				break;
