@@ -538,6 +538,12 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
+	if(camera_view == ADV_VIEW){
+		if(curx > xpos)
+			playerAngle--;
+		if(curx < xpos)
+			playerAngle++;
+	}
 	curx = xpos;
 	cury = ypos;
 	if(heli_rotate_state == 1)
@@ -785,162 +791,6 @@ void createEye(GLuint textureID){
 		1, 1,
 	};
 	eye_layer = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, textureID, GL_FILL);
-}
-void createBlock(){
-	static const GLfloat vertex_buffer_data [] = {
-		-10, 10, 10,
-		-10, -10, 10,
-		10, 10, 10,
-
-		-10, -10, 10,
-		10, 10, 10,
-		10, -10, 10,
-
-		-10, 10, -10,
-		-10, -10, -10,
-		10, 10, -10,
-
-		-10, -10, -10,
-		10, 10, -10,
-		10, -10, -10,
-
-		10, 10, 10,
-		10, -10, 10,
-		10, -10, -10,
-
-		10, 10, 10,
-		10, -10, -10,
-		10, 10, -10,
-
-		-10, 10, 10,
-		-10, -10, 10,
-		-10, -10, -10,
-
-		-10, 10, 10,
-		-10, -10, -10,
-		-10, 10, -10,
-
-		-10, 10, 10,
-		10, 10, 10,
-		10, 10, -10,
-
-		-10, 10, 10,
-		10, 10, -10,
-		-10, 10, -10,
-
-		-10, -10, 10,
-		10, -10, 10,
-		10, -10, -10,
-
-		-10, -10, 10,
-		10, -10, -10,
-		-10, -10, -10,
-	};
-	static GLfloat vertex_buffer_data_tresure[36 * 3 + 6 * 6];
-	for(int i=0;i<36*3;i++)
-		vertex_buffer_data_tresure[i] = vertex_buffer_data[i] / 2;
-	//for(int i=0;i<6;i++)
-	static const GLfloat color_buffer_data [] ={
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f, //Front face
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
-
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
-
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f, //Back face
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
-
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
-		97.0f/255.0f,78.0f/255.0f,84.0f/255.0f,
-
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f, //Top face
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
-
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
-
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f, //Bottom face
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
-
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
-		149.0f/255.0f,127.0f/255.0f,129.0f/255.0f,
-
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f, //Top face
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
-
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
-
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f, //Bottom face
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
-
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
-		219.0f/255.0f,181.0f/255.0f,132.0f/255.0f,
-	};
-	block = create3DObject(GL_TRIANGLES, 30, vertex_buffer_data, color_buffer_data, GL_FILL);
-	static const GLfloat color_buffer_data2 [] ={
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-		68.0f/255.0f,111.0f/255.0f,84.0f/255.0f,
-
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-		70.0f/255.0f,87.0f/255.0f,50.0f/255.0f,
-
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
-	};
-	player = create3DObject(GL_TRIANGLES, 30, vertex_buffer_data, color_buffer_data2, GL_FILL);
-//	treasure_block = create3DObject(GL_TRIANGLES, 30, vertex_buffer_data_tresure, color_buffer_data2, GL_FILL);
 }
 
 int skyposy = 250, skyposx = 300, skyposz = 300;
@@ -1335,19 +1185,6 @@ void draw (GLFWwindow* window, int level)
 	//MVP = VP * Matrices.model;
 	//glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	//draw3DObject(temp);
-/*	for(int p=0;p<treasure.size();p++){
-		int i = treasure[p].first, j = treasure[p].second;
-		float xpos = edge*(-nhor/2) + j*edge + edge/2;
-		float ypos = 5;
-		float zpos = edge*(-nvert/2) + i*edge + edge/2;
-		Matrices.model = glm::mat4(1.0f);
-		glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
-		glm::mat4 rotateBlock = glm::rotate((float)(angle * M_PI/180.0f),glm::vec3(0,1,0));
-		Matrices.model *= (translateBlock * rotateBlock);
-		MVP = VP * Matrices.model;
-		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-		draw3DObject(treasure_block);
-	}*/
 	// Render font on screen
 	font_state = 1.2;
 	reshapeWindow(window, 1200, 600);
@@ -1481,7 +1318,6 @@ void initGL (GLFWwindow* window, int width, int height)
 	createportal(portal, portal2);
 	createLifebar ();
 	createEye(eye);
-	createBlock();
 	//createCatapult2();
 
 	// Create and compile our GLSL program from the shaders
