@@ -606,8 +606,10 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 
 
 float camera_rotation_angle = 90;
-VAO *block, *block_layer[6], *background[6], *player, *treasure_block, *rotBlock[6], *oscillator[6], *portal_block, *portal_block2;
-void createRotatingBlock(GLuint textureID, GLuint textureID2, GLuint textureID3,GLuint textureID5,GLuint textureID4, GLuint textureID6){
+VAO *block, *block_layer[6], *background[6], *player, *rotBlock[6], *oscillator[6], *portal_block, *portal_block2, 
+    *head_block[6], *body_block[6], *handl_block[6], *eye_layer, *treasure_block[6];
+void createRotatingBlock(GLuint textureID, GLuint textureID2, GLuint textureID3,GLuint textureID5,GLuint textureID4, GLuint textureID6, 
+		GLuint headT, GLuint bodyT, GLuint handlT, GLuint treasureT){
 	static const GLfloat vertex_buffer_data0[] = {
 		-10, 10, 10,
 		-10, -10, 10,
@@ -630,6 +632,10 @@ void createRotatingBlock(GLuint textureID, GLuint textureID2, GLuint textureID3,
 	rotBlock[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, textureID, GL_FILL);
 	oscillator[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, textureID6, GL_FILL);
 	block_layer[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, textureID4, GL_FILL);
+	head_block[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, headT, GL_FILL);
+	body_block[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, bodyT, GL_FILL);
+	handl_block[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, handlT, GL_FILL);
+	treasure_block[0] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, treasureT, GL_FILL);
 
 	static const GLfloat vertex_buffer_data1[] = {
 		-10, 10, -10,
@@ -652,6 +658,10 @@ void createRotatingBlock(GLuint textureID, GLuint textureID2, GLuint textureID3,
 	rotBlock[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data1, textureID, GL_FILL);
 	oscillator[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data1, textureID6, GL_FILL);
 	block_layer[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data1, textureID4, GL_FILL);
+	head_block[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data1, headT, GL_FILL);
+	body_block[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data1, bodyT, GL_FILL);
+	handl_block[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data1, handlT, GL_FILL);
+	treasure_block[1] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data1, texture_buffer_data1, treasureT, GL_FILL);
 
 	static const GLfloat vertex_buffer_data2[] = {
 		10, 10, 10,
@@ -674,6 +684,10 @@ void createRotatingBlock(GLuint textureID, GLuint textureID2, GLuint textureID3,
 	rotBlock[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data2, textureID, GL_FILL);
 	oscillator[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data2, textureID6, GL_FILL);
 	block_layer[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data2, textureID4, GL_FILL);
+	head_block[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data2, headT, GL_FILL);
+	body_block[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data2, bodyT, GL_FILL);
+	handl_block[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data2, handlT, GL_FILL);
+	treasure_block[2] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data2, texture_buffer_data2, treasureT, GL_FILL);
 
 	static const GLfloat vertex_buffer_data3[] = {
 		-10, 10, 10,
@@ -696,6 +710,10 @@ void createRotatingBlock(GLuint textureID, GLuint textureID2, GLuint textureID3,
 	rotBlock[3] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data3, texture_buffer_data3, textureID, GL_FILL);
 	oscillator[3] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data3, texture_buffer_data3, textureID6, GL_FILL);
 	block_layer[3] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data3, texture_buffer_data3, textureID4, GL_FILL);
+	head_block[3] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data3, texture_buffer_data3, headT, GL_FILL);
+	body_block[3] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data3, texture_buffer_data3, bodyT, GL_FILL);
+	handl_block[3] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data3, texture_buffer_data3, handlT, GL_FILL);
+	treasure_block[3] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data3, texture_buffer_data3, treasureT, GL_FILL);
 
 	static const GLfloat vertex_buffer_data4[] = {
 		-10, 10, 10,
@@ -718,6 +736,10 @@ void createRotatingBlock(GLuint textureID, GLuint textureID2, GLuint textureID3,
 	rotBlock[4] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data4, texture_buffer_data4, textureID2, GL_FILL);
 	oscillator[4] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data4, texture_buffer_data4, textureID3, GL_FILL);
 	block_layer[4] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data4, texture_buffer_data4, textureID5, GL_FILL);
+	head_block[4] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data4, texture_buffer_data4, headT, GL_FILL);
+	body_block[4] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data4, texture_buffer_data4, bodyT, GL_FILL);
+	handl_block[4] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data4, texture_buffer_data4, handlT, GL_FILL);
+	treasure_block[4] = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data4, texture_buffer_data4, treasureT, GL_FILL);
 }
 void createportal(GLuint textureID, GLuint textureID2){
 	static const GLfloat vertex_buffer_data0[] = {
@@ -741,6 +763,28 @@ void createportal(GLuint textureID, GLuint textureID2){
 	};
 	portal_block = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, textureID, GL_FILL);
 	portal_block2 = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, textureID2, GL_FILL);
+}
+void createEye(GLuint textureID){
+	static const GLfloat vertex_buffer_data0[] = {
+		-10, 10, 0,
+		-10, -10, 0,
+		10, 10, 0,
+
+		-10, -10, 0,
+		10, 10, 0,
+		10, -10, 0,
+	};
+
+	static const GLfloat texture_buffer_data0[] = {
+		0, 0,
+		0, 1,
+		1, 0,
+
+		0, 1,
+		1, 0,
+		1, 1,
+	};
+	eye_layer = create3DTexturedObject(GL_TRIANGLES, 6, vertex_buffer_data0, texture_buffer_data0, textureID, GL_FILL);
 }
 void createBlock(){
 	static const GLfloat vertex_buffer_data [] = {
@@ -896,7 +940,7 @@ void createBlock(){
 		162.0f/255.0f,168.0f/255.0f,134.0f/255.0f,
 	};
 	player = create3DObject(GL_TRIANGLES, 30, vertex_buffer_data, color_buffer_data2, GL_FILL);
-	treasure_block = create3DObject(GL_TRIANGLES, 30, vertex_buffer_data_tresure, color_buffer_data2, GL_FILL);
+//	treasure_block = create3DObject(GL_TRIANGLES, 30, vertex_buffer_data_tresure, color_buffer_data2, GL_FILL);
 }
 
 int skyposy = 250, skyposx = 300, skyposz = 300;
@@ -1075,7 +1119,6 @@ void draw (GLFWwindow* window, int level)
 	MVP = VP * Matrices.model;
 	glUniformMatrix4fv(Matrices.TexMatrixID, 1, GL_FALSE, &MVP[0][0]);
 	glUniform1i(glGetUniformLocation(textureProgramID, "texSampler"), 0);
-	//if(camera_view != TOP_VIEW && camera_view != TOWER_VIEW) 
 	for(int i=0;i<6;i++){
 		GLint myUniformLocation = glGetUniformLocation(textureProgramID, "objectPosition");
 		glUniform3f(myUniformLocation,skyposx,skyposy,skyposz);
@@ -1186,6 +1229,83 @@ void draw (GLFWwindow* window, int level)
 		if(camera_switch_state == 0 && portal_pos == 10.0f)
 			camera_view = saved_camera, camera_switch_state = 1;
 	}
+	Matrices.model = glm::mat4(1.0f);
+	glm::mat4 translatePlayer = glm::translate(glm::vec3(playerposx, playerposy + 3.5, playerposz));
+	glm::mat4 scalePlayer = glm::scale(glm::vec3(0.4,0.5,0.3));
+	glm::mat4 roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
+	MVP = VP * Matrices.model;
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	for(int q=0;q<5;q++)draw3DTexturedObject(body_block[q]);
+
+	Matrices.model = glm::mat4(1.0f);
+	translatePlayer = glm::translate(glm::vec3(playerposx + 1*sin(playerAngle*M_PI/180.0f), playerposy + 10 , playerposz - 1*cos(playerAngle*M_PI/180.0f)));
+	scalePlayer = glm::scale(glm::vec3(0.2,0.2,0.2));
+	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
+	MVP = VP * Matrices.model;
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	for(int q=0;q<5;q++)draw3DTexturedObject(head_block[q]);
+
+	Matrices.model = glm::mat4(1.0f);
+	translatePlayer = glm::translate(glm::vec3(playerposx + 5*cos(playerAngle*M_PI/180.0f), playerposy + 2, playerposz + 5*sin(playerAngle*M_PI/180.0f)));
+	scalePlayer = glm::scale(glm::vec3(0.1,0.5,0.1));
+	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
+	MVP = VP * Matrices.model;
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	for(int q=0;q<5;q++)draw3DTexturedObject(handl_block[q]);
+	
+	Matrices.model = glm::mat4(1.0f);
+	translatePlayer = glm::translate(glm::vec3(playerposx - 5*cos(playerAngle*M_PI/180.0f), playerposy + 2, playerposz - 5*sin(playerAngle*M_PI/180.0f)));
+	scalePlayer = glm::scale(glm::vec3(0.1,0.5,0.1));
+	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
+	MVP = VP * Matrices.model;
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	for(int q=0;q<5;q++)draw3DTexturedObject(handl_block[q]);
+	
+	Matrices.model = glm::mat4(1.0f);
+	translatePlayer = glm::translate(glm::vec3(playerposx + 2*cos(playerAngle*M_PI/180.0f), playerposy - 2, playerposz + 2*sin(playerAngle*M_PI/180.0f)));
+	scalePlayer = glm::scale(glm::vec3(0.1,0.5,0.1));
+	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
+	MVP = VP * Matrices.model;
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	for(int q=0;q<5;q++)draw3DTexturedObject(handl_block[q]);
+	
+	Matrices.model = glm::mat4(1.0f);
+	translatePlayer = glm::translate(glm::vec3(playerposx - 2*cos(playerAngle*M_PI/180.0f), playerposy - 2, playerposz - 2*sin(playerAngle*M_PI/180.0f)));
+	scalePlayer = glm::scale(glm::vec3(0.1,0.5,0.1));
+	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
+	MVP = VP * Matrices.model;
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	for(int q=0;q<5;q++)draw3DTexturedObject(handl_block[q]);
+	
+	Matrices.model = glm::mat4(1.0f);
+	translatePlayer = glm::translate(glm::vec3(playerposx + 3.1*sin(playerAngle*M_PI/180.0f), playerposy +10  , playerposz - 3.1*cos(playerAngle*M_PI/180.0f)));
+	scalePlayer = glm::scale(glm::vec3(0.18,0.18,1));
+	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
+	MVP = VP * Matrices.model;
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	draw3DTexturedObject(eye_layer);
+	
+	for(int p=0;p<treasure.size();p++){
+		int i = treasure[p].first, j = treasure[p].second;
+		float xpos = edge*(-nhor/2) + j*edge + edge/2;
+		float ypos = 5;
+		float zpos = edge*(-nvert/2) + i*edge + edge/2;
+		Matrices.model = glm::mat4(1.0f);
+		glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
+		glm::mat4 rotateBlock = glm::rotate((float)(angle * M_PI/180.0f),glm::vec3(0,1,0));
+		glm::mat4 scaleBlock = glm::scale(glm::vec3(0.5,1,0.5));
+		Matrices.model *= (translateBlock * rotateBlock * scaleBlock);
+		MVP = VP * Matrices.model;
+		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		for(int q=0;q<5;q++)draw3DTexturedObject(treasure_block[q]);
+	}
 	glUseProgram (programID);
 	// Load identity to model matrix
 	Matrices.model = glm::mat4(1.0f);
@@ -1215,43 +1335,7 @@ void draw (GLFWwindow* window, int level)
 	//MVP = VP * Matrices.model;
 	//glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	//draw3DObject(temp);
-
-	Matrices.model = glm::mat4(1.0f);
-	glm::mat4 translatePlayer = glm::translate(glm::vec3(playerposx, playerposy, playerposz));
-	glm::mat4 scalePlayer = glm::scale(glm::vec3(0.4,0.8,0.3));
-	glm::mat4 roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
-	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
-	MVP = VP * Matrices.model;
-	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	draw3DObject(block);
-
-	Matrices.model = glm::mat4(1.0f);
-	translatePlayer = glm::translate(glm::vec3(playerposx, playerposy + 10 , playerposz - 1));
-	scalePlayer = glm::scale(glm::vec3(0.2,0.2,0.2));
-	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
-	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
-	MVP = VP * Matrices.model;
-	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	draw3DObject(block);
-
-	Matrices.model = glm::mat4(1.0f);
-	translatePlayer = glm::translate(glm::vec3(playerposx + 5*cos(playerAngle*M_PI/180.0f), playerposy + 2, playerposz + 5*sin(playerAngle*M_PI/180.0f)));
-	scalePlayer = glm::scale(glm::vec3(0.1,0.5,0.1));
-	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
-	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
-	MVP = VP * Matrices.model;
-	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	draw3DObject(block);
-	
-	Matrices.model = glm::mat4(1.0f);
-	translatePlayer = glm::translate(glm::vec3(playerposx - 5*cos(playerAngle*M_PI/180.0f), playerposy + 2, playerposz - 5*sin(playerAngle*M_PI/180.0f)));
-	scalePlayer = glm::scale(glm::vec3(0.1,0.5,0.1));
-	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
-	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
-	MVP = VP * Matrices.model;
-	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	draw3DObject(block);
-	for(int p=0;p<treasure.size();p++){
+/*	for(int p=0;p<treasure.size();p++){
 		int i = treasure[p].first, j = treasure[p].second;
 		float xpos = edge*(-nhor/2) + j*edge + edge/2;
 		float ypos = 5;
@@ -1263,10 +1347,7 @@ void draw (GLFWwindow* window, int level)
 		MVP = VP * Matrices.model;
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		draw3DObject(treasure_block);
-	}
-/*	for(int i = 0;i<= N_PARTS;i++){
-		draw3DObject(playerParts[i]);
-*/
+	}*/
 	// Render font on screen
 	font_state = 1.2;
 	reshapeWindow(window, 1200, 600);
@@ -1361,7 +1442,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	// load an image file directly as a new OpenGL texture
 	// GLuint texID = SOIL_load_OGL_texture ("beach.png", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS); // Buggy for OpenGL3
 	//GLuint textureID = createTexture("background.png");
-	GLuint textureID[7], building_top, rot_block, rot_block_top, oscillate_block, floor_block_side, oscillate_block_side, portal, portal2;
+	GLuint treasureT, eye, body, handl,textureID[7], building_top, rot_block, rot_block_top, oscillate_block, floor_block_side, oscillate_block_side, portal, portal2, head;
 	textureID[0] = createTexture("images/front.png");
 	textureID[1] = createTexture("images/top.png");
 	textureID[2] = createTexture("images/left.png");
@@ -1376,10 +1457,14 @@ void initGL (GLFWwindow* window, int width, int height)
 	oscillate_block_side = createTexture("images/oscSide.png");
 	portal = createTexture("images/portal.png");
 	portal2 = createTexture("images/portal2.png");
+	head = createTexture("images/head.png");
+	body = createTexture("images/body.png");
+	handl = createTexture("images/handl.png");
+	eye = createTexture("images/eye.png");
+	treasureT = createTexture("images/treasure.png");
 
 	// check for an error during the load process
-	for(int i =0;i<5;i++)
-		if(textureID[i] == 0)
+		if(head == 0)
 			cout << "SOIL loading error: '" << SOIL_last_result() << "'" << endl;
 
 	// Create and compile our GLSL program from the texture shaders
@@ -1392,9 +1477,10 @@ void initGL (GLFWwindow* window, int width, int height)
 	// Create the models
 	// Generate the VAO, VBOs, vertices data & copy into the array buffer
 	createBackground (textureID);
-	createRotatingBlock (rot_block, rot_block_top, oscillate_block, building_top, floor_block_side, oscillate_block_side);
+	createRotatingBlock (rot_block, rot_block_top, oscillate_block, building_top, floor_block_side, oscillate_block_side, head, body, handl, treasureT);
 	createportal(portal, portal2);
 	createLifebar ();
+	createEye(eye);
 	createBlock();
 	//createCatapult2();
 
