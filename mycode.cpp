@@ -380,6 +380,7 @@ float heli_angle, init_heli_angle;
 int heli_rotate_state = 0, heli_zoom_in_state = 0, heli_zoom_out_state = 0;
 float heli_dist = 180, heli_disty = 200;
 
+int font_state = 0;
 int open_portal = 0;
 float portal_pos = -10;
 
@@ -595,11 +596,12 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	   gluPerspective (fov, (GLfloat) fbwidth / (GLfloat) fbheight, 0.1, 500.0); */
 	// Store the projection matrix in a variable for future use
 	// Perspective projection for 3D views
+	if(font_state == 0)
 	Matrices.projection = glm::perspective (fov, (GLfloat) fbwidth / (GLfloat) fbheight, 0.1f, screenfar);
 
 	// Ortho projection for 2D views
 	//	screenleft = -screenleft, screenright = -screenright, screenbotton= - screenbotton, screentop = -screentop;
-	//Matrices.projection = glm::ortho(screenleft, screenright, screenbotton, screentop, screennear, screenfar);
+	else Matrices.projection = glm::ortho(screenleft, screenright, screenbotton, screentop, screennear, screenfar);
 }
 
 
@@ -977,7 +979,7 @@ float dist = 200;
 float angle = 0;
 float zdist = 200;
 
-void draw ()
+void draw (GLFWwindow* window)
 {
 	// clear the color and depth in the frame buffer
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1154,6 +1156,7 @@ void draw ()
 	//MVP = VP * Matrices.model;
 	//glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	//draw3DObject(temp);
+
 	Matrices.model = glm::mat4(1.0f);
 	glm::mat4 translatePlayer = glm::translate(glm::vec3(playerposx, playerposy, playerposz));
 	glm::mat4 scalePlayer = glm::scale(glm::vec3(0.5,1,0.5));
@@ -1196,6 +1199,8 @@ void draw ()
 		draw3DObject(playerParts[i]);
 */
 	// Render font on screen
+	font_state = 1;
+	reshapeWindow(window, 1200, 600);
 	static int fontScale = 1;
 	float fontScaleValue = 50 + 0.25*sinf(fontScale*M_PI/180.0f);
 	glm::vec3 fontColor = glm::vec3(228.0f/255.0f,142.0f/255.0f,57.0f/255.0f);//getRGBfromHue (fontScale);
@@ -1220,6 +1225,8 @@ void draw ()
 	char str[10];
 	// Render font
 	GL3Font.font->Render("Hello");
+	font_state = 0;
+	reshapeWindow(window,1200,600);
 }
 
 /* Initialise glfw window, I/O callbacks and the renderer to use */
@@ -1683,7 +1690,7 @@ int main (int argc, char** argv)
 		/* Draw in loop */
 		while (!glfwWindowShouldClose(window)) {
 			movePlayer();
-			draw();
+			draw(window);
 
 			// Swap Frame Buffer in double buffering
 			glfwSwapBuffers(window);
