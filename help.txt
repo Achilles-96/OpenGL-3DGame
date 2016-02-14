@@ -10,3 +10,6 @@ Camera top view: w
 Camera tower view: d
 Camera adventurer view: a
 Camera follower view: s
+Camera helicopter: e
+Zoom in: scroll up
+aoom out: scroll down
