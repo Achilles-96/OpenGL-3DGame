@@ -1121,8 +1121,9 @@ void draw (GLFWwindow* window, int level)
 		float zpos = edge*(-nvert/2) + i*edge + edge/2;
 		Matrices.model = glm::mat4(1.0f);
 		glm::mat4 translateBlock = glm::translate(glm::vec3(xpos,ypos,zpos));
+		glm::mat4 scaleBlock = glm::scale(glm::vec3(0.8,0.8,0.8));
 		glm::mat4 rotateBlock = glm::rotate((float)(angle * M_PI/180.0f),glm::vec3(0,1,0));
-		Matrices.model *= (translateBlock * rotateBlock);
+		Matrices.model *= (translateBlock * rotateBlock * scaleBlock);
 		MVP = VP * Matrices.model;
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		GLint myUniformLocation = glGetUniformLocation(textureProgramID, "objectPosition");
@@ -1166,7 +1167,6 @@ void draw (GLFWwindow* window, int level)
 		glm::mat4 translatePlayer = glm::translate(portal_vec);
 		glm::mat4 scalePlayer = glm::scale(glm::vec3(0.8,1,1));
 		float portal_angle = acos(dot(portal_vec - player_vec, glm::vec3(10, 10, 0))/(length(portal_vec - player_vec)*length(glm::vec3(10,10,0))) );
-		cout<<portal_angle<<endl;
 		glm::mat4 rotateBlock = glm::rotate((float)(portal_angle - M_PI/2.0),glm::vec3(0,1,0));
 		Matrices.model *= (translatePlayer * rotateBlock * scalePlayer );
 		MVP = VP * Matrices.model;
@@ -1218,13 +1218,39 @@ void draw (GLFWwindow* window, int level)
 
 	Matrices.model = glm::mat4(1.0f);
 	glm::mat4 translatePlayer = glm::translate(glm::vec3(playerposx, playerposy, playerposz));
-	glm::mat4 scalePlayer = glm::scale(glm::vec3(0.5,1,0.5));
+	glm::mat4 scalePlayer = glm::scale(glm::vec3(0.4,0.8,0.3));
 	glm::mat4 roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
-	Matrices.model *= (translatePlayer * scalePlayer * roatetePlayer);
+	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
 	MVP = VP * Matrices.model;
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	draw3DObject(block);
 
+	Matrices.model = glm::mat4(1.0f);
+	translatePlayer = glm::translate(glm::vec3(playerposx, playerposy + 10 , playerposz - 1));
+	scalePlayer = glm::scale(glm::vec3(0.2,0.2,0.2));
+	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
+	MVP = VP * Matrices.model;
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	draw3DObject(block);
+
+	Matrices.model = glm::mat4(1.0f);
+	translatePlayer = glm::translate(glm::vec3(playerposx + 5*cos(playerAngle*M_PI/180.0f), playerposy + 2, playerposz + 5*sin(playerAngle*M_PI/180.0f)));
+	scalePlayer = glm::scale(glm::vec3(0.1,0.5,0.1));
+	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
+	MVP = VP * Matrices.model;
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	draw3DObject(block);
+	
+	Matrices.model = glm::mat4(1.0f);
+	translatePlayer = glm::translate(glm::vec3(playerposx - 5*cos(playerAngle*M_PI/180.0f), playerposy + 2, playerposz - 5*sin(playerAngle*M_PI/180.0f)));
+	scalePlayer = glm::scale(glm::vec3(0.1,0.5,0.1));
+	roatetePlayer = glm::rotate((float)(-playerAngle*M_PI/180.0f),glm::vec3(0,1,0));
+	Matrices.model *= (translatePlayer *  roatetePlayer * scalePlayer);
+	MVP = VP * Matrices.model;
+	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	draw3DObject(block);
 	for(int p=0;p<treasure.size();p++){
 		int i = treasure[p].first, j = treasure[p].second;
 		float xpos = edge*(-nhor/2) + j*edge + edge/2;
@@ -1477,7 +1503,14 @@ void checkFall(){
 			playerposy = 10 + edge;
 			return;
 		}
-		else if(playerposy - edge/2 > impos[playerOnBlock - 100 -1].first || playerposy + edge/2 < impos[playerOnBlock - 100 - 1].first - edge){
+		else if((playerposy - edge/2 >= impos[playerOnBlock - 100 -1].first || playerposy + edge/2 <= impos[playerOnBlock - 100 - 1].first - edge)){
+			int i = imblocks[playerOnBlock - 100 - 1].first, j = imblocks[playerOnBlock - 100 - 1].second;
+			float xpos = edge*(-nhor/2) + j*edge + edge/2;
+			float zpos = edge*(-nvert/2) + i*edge + edge/2;
+			if(playerposx - edge/4 > xpos - edge/2 &&
+					playerposx + edge/4 < xpos + edge/2 &&
+					playerposz - edge/4 > zpos - edge/2 &&
+					playerposz + edge/4 < zpos + edge/2)
 			playerposy--;
 			return;
 		}
@@ -1513,7 +1546,6 @@ void jumpPlayer(){
 				speedy = 0,jump = 0;
 			else
 				speedy -= 0.5;
-
 	}
 }
 int checkCollision(float xpos, float ypos, float zpos, int direction){
